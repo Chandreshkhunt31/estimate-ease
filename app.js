@@ -1,15 +1,25 @@
 const express = require("express");
 require('dotenv').config();
-var routes = require("./app/routes"); 
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+var bodyParser = require("body-parser");
+require('./app/config/db')
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
+app.all("/", (req,res) => {
+  return res.status(200).send("Connected... wohoo");
+});
+
+var routes = require("./app/routes"); 
 app.use('/', routes);
 
 app.listen(PORT, function (err) {
   if (err) console.log(err);
-  console.log("Server listening on PORT", PORT);
+  console.log("Server listening on PORT http://localhost/"+ PORT);
 });

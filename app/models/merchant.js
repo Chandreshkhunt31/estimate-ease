@@ -57,7 +57,7 @@ module.exports = (sequelize, DataTypes) => {
 
     Merchant.hasMany(models.User, {
         foreignKey: 'merchant_id',
-        as: 'users',
+        as: 'merchants',
       });
   };
 

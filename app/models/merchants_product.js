@@ -1,8 +1,7 @@
-// models/user.js
 'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-  const User = sequelize.define('User', {
+  const MerchantProduct = sequelize.define('MerchantProduct', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -10,28 +9,19 @@ module.exports = (sequelize, DataTypes) => {
     },
     merchant_id: {
       type: DataTypes.INTEGER,
+      allowNull: false,
       references: {
         model: 'merchants',
         key: 'id'
-      },
-      allowNull: false
+      }
     },
-    name: {
-      type: DataTypes.STRING(255),
-      allowNull: false
-    },
-    email: {
-      type: DataTypes.STRING(255),
+    product_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true
-    },
-    phone_number: {
-      type: DataTypes.STRING(10),
-      allowNull: true
-    },
-    password: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      references: {
+        model: 'products',
+        key: 'id'
+      }
     },
     is_active: {
       type: DataTypes.BOOLEAN,
@@ -43,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     }
   }, {
-    tableName: 'users',
+    tableName: 'merchant_products',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at',
@@ -51,13 +41,18 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true
   });
 
-  User.associate = function(models) {
-    // Define associations here
-    User.belongsTo(models.Merchant, {
+  MerchantProduct.associate = function(models) {
+
+    MerchantProduct.belongsTo(models.Merchant, {
       foreignKey: 'merchant_id',
-      as: 'merchant'
+      as: 'merchants'
+    });
+
+    MerchantProduct.belongsTo(models.Product, {
+      foreignKey: 'product_id',
+      as: 'products'
     });
   };
 
-  return User;
+  return MerchantProduct;
 };

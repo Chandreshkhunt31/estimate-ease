@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true
   });
 
-  Unit.associate = function(models) {};
+  Unit.associate = function (models) { };
 
   return Unit;
 };
