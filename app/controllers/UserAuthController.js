@@ -8,41 +8,74 @@ const saltRounds = 10;
 
 const signup = async (req, res) => {
   try {
-    const body = req.body
-
+    const body = req.body;
+ 
     const checkMerchant = await Merchant.findByPk(body.merchant_id);
-    if (!checkMerchant) return res.status(404).send({ status: false, message: "This Merchant does not exist. Please check Merchant ID." });
-
+    if (!checkMerchant) {
+      return res.status(404).json({
+        status: false,
+        message: "This Merchant does not exist. Please check the Merchant ID.",
+      });
+    }
+ 
     const hashedPassword = await bcrypt.hash(body.password, saltRounds);
-    body.password = hashedPassword
-
+    body.password = hashedPassword;
+ 
     const user = await User.create(body);
-    return res.status(201).send({ status: true, message: "User created successfully.", data: user });
+    return res.status(201).json({
+      status: true,
+      message: "User created successfully.",
+      data: user,
+    });
 
   } catch (error) {
-    console.log(error);
-    return res.status(500).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: error });
+    console.error(error);
+    return res.status(500).json({
+      status: false,
+      message: "Something went wrong. Please try again.",
+      error: error.message, 
+    });
   }
 };
+
 
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+ 
     const user = await User.findOne({ where: { email } });
-
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+ 
+    if (!user) {
+      return res.status(401).json({ status: false, message: 'User not found' });
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1d' });
-    return res.status(200).send({ status: true, message: "User created successfully.", data: token, });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ status: false, message: 'Invalid credentials' });
+    }
+ 
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: "User logged in successfully.",
+      data: { token },
+    });
 
   } catch (error) {
-    console.log(error);
-    return res.status(500).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: error });
+    console.error(error);
+    return res.status(500).json({
+      status: false,
+      message: "Something went wrong. Please try again.",
+      error: error.message,
+    });
   }
 };
+
 
 module.exports = {
   signup,
