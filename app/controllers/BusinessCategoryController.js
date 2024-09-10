@@ -1,51 +1,103 @@
 const BusinessCategory = require('../models').BusinessCategory;
 
-// insert Business Category
 const addBusinessCategory = async (req, res) => {
     try {
-        const body = req.body;
+        const { name } = req.body; 
 
-        const isExist = await BusinessCategory.findOne({ where: { name: body.name } });
-        if (isExist) return res.status(404).send({ status: false, message: "This category is already exist. Please try another one." });
+        const isExist = await BusinessCategory.findOne({ where: { name } });
+        if (isExist) {
+            return res.status(409).json({ 
+                status: false, 
+                message: "This category already exists. Please try another one." 
+            });
+        }
+ 
+        const newBusinessCategory = await BusinessCategory.create({ name });
+        if (!newBusinessCategory) {
+            return res.status(500).json({ 
+                status: false, 
+                message: "Something went wrong while creating the business category.", 
+                data: {} 
+            });
+        } 
 
-        const addBusinessCategoryData = await BusinessCategory.create(body);
-        if (!addBusinessCategoryData) return res.status(400).send({ status: false, message: "Something wrong while create a business category!!", data: {} });
-
-        return res.status(201).send({ status: true, message: "Business category added successfully.", data: addBusinessCategoryData, });
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
+        return res.status(201).json({ 
+            status: true, 
+            message: "Business category added successfully.", 
+            data: newBusinessCategory 
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ 
+            status: false, 
+            message: "An error occurred. Please try again.", 
+            error: error.message 
+        });
     }
-}
+};
 
-// get Business Category List
 const getBusinessCategoryList = async (req, res) => {
     try {
-        const getBusinessCategoryList = await BusinessCategory.findAll();
-        if (!getBusinessCategoryList) return res.status(400).send({ status: false, message: "Business category data not found", data: {} });
-
-        return res.status(200).send({ status: true, message: "Business category list get successfully", data: getBusinessCategoryList, });
-
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
+        const businessCategoryList = await BusinessCategory.findAll();
+ 
+        if (!businessCategoryList || businessCategoryList.length === 0) {
+            return res.status(404).json({ 
+                status: false, 
+                message: "No business categories found.", 
+                data: [] 
+            });
+        }
+ 
+        return res.status(200).json({ 
+            status: true, 
+            message: "Business category list retrieved successfully.", 
+            data: businessCategoryList 
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ 
+            status: false, 
+            message: "An error occurred. Please try again.", 
+            error: error.message 
+        });
     }
-}
+};
 
-// get Business Category by bus_cat_id
+
 const getBusinessCategory = async (req, res) => {
     try {
-        const { bus_cat_id } = req.query
-
-        const getBusinessCategoryData = await BusinessCategory.findByPk(bus_cat_id);
-        if (!getBusinessCategoryData) return res.status(400).send({ status: false, message: "Business category data not found", data: {} });
-
-        return res.status(200).send({ status: true, message: "Business category get successfully", data: getBusinessCategoryData, });
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
+        const { bus_cat_id } = req.query;
+ 
+        if (!bus_cat_id) {
+            return res.status(400).json({ 
+                status: false, 
+                message: "Business category ID is required." 
+            });
+        }
+ 
+        const businessCategory = await BusinessCategory.findByPk(bus_cat_id);
+        if (!businessCategory) {
+            return res.status(404).json({ 
+                status: false, 
+                message: "Business category not found.", 
+                data: {} 
+            });
+        }
+ 
+        return res.status(200).json({ 
+            status: true, 
+            message: "Business category retrieved successfully.", 
+            data: businessCategory 
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ 
+            status: false, 
+            message: "An error occurred. Please try again.", 
+            error: error.message 
+        });
     }
-}
+};
 
 module.exports = {
     addBusinessCategory,
