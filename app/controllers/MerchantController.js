@@ -1,85 +1,194 @@
 const Merchant = require('../models').Merchant;
 
-// insert Merchant
 const addMerchant = async (req, res) => {
     try {
-        const body = req.body;
+        const { name, business_category_id, address, city, state } = req.body;
 
-        const isExist = await Merchant.findOne({ where: { name: body.name } });
-        if (isExist) return res.status(404).send({ status: false, message: "This Merchant is already exist. Please try another one." });
+        if (!name || !business_category_id || !address || !city || !state) {
+            return res.status(400).json({
+                status: false,
+                message: "All fields (name, business_category_id, address, city, state) are required."
+            });
+        }
 
-        const addMerchantData = await Merchant.create(body);
-        if (!addMerchantData) return res.status(400).send({ status: false, message: "Something went wrong. while insert Merchant data.!!", data: {} });
+        const isExist = await Merchant.findOne({ where: { name } });
+        if (isExist) {
+            return res.status(409).json({
+                status: false,
+                message: "This Merchant already exists. Please try another one."
+            });
+        }
 
-        return res.status(201).send({ status: true, message: "Merchant added successfully.", data: addMerchantData, });
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
-    }
-}
+        const data = { name, business_category_id, address, city, state };
 
-// update Merchant
-const updateMerchant = async (req, res) => {
-    try {
-        const body = req.body;
-        const { merchant_id } = req.query;
+        const newMerchant = await Merchant.create(data);
+        if (!newMerchant) {
+            return res.status(500).json({
+                status: false,
+                message: "Something went wrong while inserting Merchant data.",
+                data: {}
+            });
+        }
 
-        const checkMerchant = await Merchant.findByPk(merchant_id);
-        if (!checkMerchant) return res.status(404).send({ status: false, message: "This Merchant does not exist. Please check Merchant ID." });
-
-        const [affectedRows] = await Merchant.update(body, { where: { id: merchant_id } });
-        if (affectedRows === 0) return res.status(400).send({ status: false, message: "No changes were made to the Merchant data. Please check the provided information.", data: {} });
-
-        return res.status(200).send({ status: true, message: "Merchant updated successfully.", data: {} });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], });
+        return res.status(201).json({
+            status: true,
+            message: "Merchant added successfully.",
+            data: newMerchant
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
 
-// get  Merchant List
+
+const updateMerchant = async (req, res) => {
+    try {
+        const { merchant_id } = req.query;
+        const body = req.body;
+
+        if (!merchant_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Merchant ID is required."
+            });
+        }
+
+        const checkMerchant = await Merchant.findByPk(merchant_id);
+        if (!checkMerchant) {
+            return res.status(404).json({
+                status: false,
+                message: "This Merchant does not exist. Please check the Merchant ID."
+            });
+        }
+
+        const [affectedRows] = await Merchant.update(body, { where: { id: merchant_id } });
+
+        if (affectedRows === 0) {
+            return res.status(400).json({
+                status: false,
+                message: "No changes were made to the Merchant data. Please check the provided information.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Merchant updated successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
+
 const getMerchantList = async (req, res) => {
     try {
-        const getMerchantList = await Merchant.findAll();
-        if (!getMerchantList) return res.status(400).send({ status: false, message: "Merchant data not found", data: {} });
+        const merchantList = await Merchant.findAll();
 
-        return res.status(200).send({ status: true, message: "Merchant list get successfully", data: getMerchantList, });
+        if (!merchantList || merchantList.length === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "No merchants found.",
+                data: []
+            });
+        }
 
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
+        return res.status(200).json({
+            status: true,
+            message: "Merchant list retrieved successfully.",
+            data: merchantList
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
-}
+};
 
-// get  Merchant by merchant_id
 const getMerchant = async (req, res) => {
     try {
-        const { merchant_id } = req.query
+        const { merchant_id } = req.query;
 
-        const getMerchantData = await Merchant.findByPk(merchant_id);
-        if (!getMerchantData) return res.status(400).send({ status: false, message: "Merchant data not found", data: {} });
+        if (!merchant_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Merchant ID is required."
+            });
+        }
 
-        return res.status(200).send({ status: true, message: "Merchant get successfully", data: getMerchantData, });
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
+        const merchantData = await Merchant.findByPk(merchant_id);
+
+        if (!merchantData) {
+            return res.status(404).json({
+                status: false,
+                message: "Merchant not found.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Merchant retrieved successfully.",
+            data: merchantData
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
-}
+};
 
 const deleteMerchant = async (req, res) => {
     try {
         const { merchant_id } = req.query;
 
-        const checkMerchant = await Merchant.destroy({ where: { id: merchant_id } });
-        if (!checkMerchant) return res.status(404).send({ status: false, message: "This Merchant does not exist. Please check Merchant ID." });
+        if (!merchant_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Merchant ID is required."
+            });
+        }
 
-        return res.status(200).send({ status: true, message: `Merchant deleted successfully.`, data: {} });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], error: Err });
+        const deletedRows = await Merchant.destroy({ where: { id: merchant_id } });
+
+        if (deletedRows === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "This Merchant does not exist. Please check the Merchant ID."
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Merchant deleted successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
-
 
 module.exports = {
     addMerchant,
