@@ -23,14 +23,6 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
-    sub_product_unit_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'sub_products_units',
-        key: 'id',
-      },
-    },
     name: {
       type: DataTypes.STRING(255),
       allowNull: false
@@ -56,8 +48,8 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true
   });
 
-  MerchantSubProduct.associate = function(models) {
-   
+  MerchantSubProduct.associate = function (models) {
+
     MerchantSubProduct.belongsTo(models.MerchantProduct, {
       foreignKey: 'merchant_product_id',
       as: 'merchant_products'
@@ -66,11 +58,7 @@ module.exports = (sequelize, DataTypes) => {
     MerchantSubProduct.belongsTo(models.Merchant, {
       foreignKey: 'merchant_id',
       as: 'merchants'
-    }); 
-    MerchantSubProduct.belongsTo(models.SubProductUnit, {
-      foreignKey: 'sub_products_units_id',
-      as: 'sub_products_units'
-    }); 
+    });
   };
 
   return MerchantSubProduct;

@@ -1,35 +1,32 @@
-const Unit = require('../models').Unit;
+const SubProductUnit = require('../models').SubProductUnit;
 
 
-const addUnit = async (req, res) => {
+const addSubProductUnit = async (req, res) => {
     try {
-        const { name, code } = req.body;
-
-        console.log(req.body);
-        
-
-        const existingUnit = await Unit.findOne({ where: { name, code } });
-        if (existingUnit) {
+        const { unit_id, sub_product_id } = req.body;
+ 
+        const existingSubProductUnit = await SubProductUnit.findOne({ where: { unit_id, sub_product_id } });
+        if (existingSubProductUnit) {
             return res.status(409).json({
                 status: false,
-                message: "This Unit already exists. Please try another one.",
+                message: "This SubProductUnit already exists. Please try another one.",
                 data: {}
             });
         }
-
-        const newUnit = await Unit.create({ name, code });
-        if (!newUnit) {
+ 
+        const newSubProductUnit = await SubProductUnit.create({ unit_id, sub_product_id });
+        if (!newSubProductUnit) {
             return res.status(400).json({
                 status: false,
-                message: "Something went wrong while inserting Unit data.",
+                message: "Something went wrong while inserting Sub Product Unit data.",
                 data: {}
             });
         }
-
+ 
         return res.status(201).json({
             status: true,
-            message: "Unit added successfully.",
-            data: newUnit
+            message: "Sub Product Unit added successfully.",
+            data: newSubProductUnit
         });
     } catch (error) {
         console.error(error);
@@ -42,32 +39,33 @@ const addUnit = async (req, res) => {
 };
 
 
-const updateUnit = async (req, res) => {
+
+const updateSubProductUnit = async (req, res) => {
     try {
         const { unit_id } = req.query;
         const body = req.body;
 
-        const existingUnit = await Unit.findByPk(unit_id);
-        if (!existingUnit) {
+        const existingSubProductUnit = await SubProductUnit.findByPk(unit_id);
+        if (!existingSubProductUnit) {
             return res.status(404).json({
                 status: false,
-                message: "This Unit does not exist. Please check Unit ID.",
+                message: "This Sub Product Unit does not exist. Please check SubProductUnit ID.",
                 data: {}
             });
         }
 
-        const [affectedRows] = await Unit.update(body, { where: { id: unit_id } });
+        const [affectedRows] = await SubProductUnit.update(body, { where: { id: unit_id } });
         if (affectedRows === 0) {
             return res.status(400).json({
                 status: false,
-                message: "No changes were made to the Unit data. Please check the provided information.",
+                message: "No changes were made to the Sub Product Unit data. Please check the provided information.",
                 data: {}
             });
         }
 
         return res.status(200).json({
             status: true,
-            message: "Unit updated successfully.",
+            message: "Sub Product Unit updated successfully.",
             data: {}
         });
     } catch (error) {
@@ -81,9 +79,9 @@ const updateUnit = async (req, res) => {
 };
 
 
-const getUnitList = async (req, res) => {
+const getSubProductUnitList = async (req, res) => {
     try {
-        const units = await Unit.findAll();
+        const units = await SubProductUnit.findAll();
 
         if (units.length === 0) {
             return res.status(404).json({
@@ -95,7 +93,7 @@ const getUnitList = async (req, res) => {
 
         return res.status(200).json({
             status: true,
-            message: "Unit list retrieved successfully.",
+            message: "Sub Product Unit list retrieved successfully.",
             data: units
         });
     } catch (error) {
@@ -108,23 +106,23 @@ const getUnitList = async (req, res) => {
     }
 };
 
-const getUnit = async (req, res) => {
+const getSubProductUnit = async (req, res) => {
     try {
         const { unit_id } = req.query;
 
-        const unit = await Unit.findByPk(unit_id);
+        const unit = await SubProductUnit.findByPk(unit_id);
 
         if (!unit) {
             return res.status(404).json({
                 status: false,
-                message: "Unit not found.",
+                message: "Sub Product Unit not found.",
                 data: {}
             });
         }
 
         return res.status(200).json({
             status: true,
-            message: "Unit retrieved successfully.",
+            message: "Sub Product Unit retrieved successfully.",
             data: unit
         });
     } catch (error) {
@@ -137,23 +135,23 @@ const getUnit = async (req, res) => {
     }
 };
 
-const deleteUnit = async (req, res) => {
+const deleteSubProductUnit = async (req, res) => {
     try {
         const { unit_id } = req.query;
 
-        const deletedRows = await Unit.destroy({ where: { id: unit_id } });
+        const deletedRows = await SubProductUnit.destroy({ where: { id: unit_id } });
 
         if (deletedRows === 0) {
             return res.status(404).json({
                 status: false,
-                message: "This Unit does not exist. Please check the Unit ID.",
+                message: "This Sub Product Unit does not exist. Please check the Sub Product Unit ID.",
                 data: {}
             });
         }
 
         return res.status(200).json({
             status: true,
-            message: "Unit deleted successfully.",
+            message: "Sub Product Unit deleted successfully.",
             data: {}
         });
     } catch (error) {
@@ -168,9 +166,9 @@ const deleteUnit = async (req, res) => {
 
 
 module.exports = {
-    addUnit,
-    getUnitList,
-    getUnit,
-    deleteUnit,
-    updateUnit
+    addSubProductUnit,
+    getSubProductUnitList,
+    getSubProductUnit,
+    deleteSubProductUnit,
+    updateSubProductUnit
 }

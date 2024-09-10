@@ -2,9 +2,9 @@ const MerchantSubProduct = require('../models').MerchantSubProduct;
 
 const addMerchantSubProduct = async (req, res) => {
     try {
-        const { merchant_id, product_id } = req.body;
+        const { merchant_id, merchant_product_id, name, price } = req.body;
 
-        if (!merchant_id || !product_id) {
+        if (!merchant_id || !merchant_product_id || !name) {
             return res.status(400).json({
                 status: false,
                 message: "Merchant ID and Product ID are required."
@@ -12,7 +12,7 @@ const addMerchantSubProduct = async (req, res) => {
         }
 
         const existingSubProduct = await MerchantSubProduct.findOne({
-            where: { merchant_id, product_id, is_active: true }
+            where: { merchant_id, merchant_product_id, is_active: true }
         });
         if (existingSubProduct) {
             return res.status(409).json({
@@ -21,7 +21,7 @@ const addMerchantSubProduct = async (req, res) => {
             });
         }
 
-        const newSubProduct = await MerchantSubProduct.create({ merchant_id, product_id });
+        const newSubProduct = await MerchantSubProduct.create({ merchant_id, merchant_product_id, name, price });
         if (!newSubProduct) {
             return res.status(500).json({
                 status: false,
@@ -165,7 +165,7 @@ const getMerchantSubProduct = async (req, res) => {
 const deleteMerchantSubProduct = async (req, res) => {
     try {
         const { merchant_sub_product_id } = req.query;
- 
+
         if (!merchant_sub_product_id) {
             return res.status(400).json({
                 status: false,
@@ -173,9 +173,9 @@ const deleteMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
- 
+
         const affectedRows = await MerchantSubProduct.destroy({ where: { id: merchant_sub_product_id } });
- 
+
         if (affectedRows === 0) {
             return res.status(404).json({
                 status: false,
@@ -183,7 +183,7 @@ const deleteMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
- 
+
         return res.status(200).json({
             status: true,
             message: "Merchant Sub Product deleted successfully.",

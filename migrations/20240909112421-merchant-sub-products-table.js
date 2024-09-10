@@ -25,15 +25,7 @@ module.exports = {
           model: 'merchants',
           key: 'id',
         },
-      },
-      sub_product_unit_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'sub_products_units',
-          key: 'id',
-        },
-      },
+      }, 
       name: {
         type: Sequelize.STRING(255),
         allowNull: false,

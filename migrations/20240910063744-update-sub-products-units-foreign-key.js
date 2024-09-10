@@ -5,7 +5,7 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     // Remove the old constraint if it exists
     try {
-      await queryInterface.removeConstraint('sub_products_units', 'sub_products_units_sub1_product_id_fkey');
+      await queryInterface.removeConstraint('sub_products_units', 'sub_products_units_ibfk_2');
     } catch (error) {
       console.log('Constraint does not exist, skipping removal.');
     }
