@@ -1,87 +1,201 @@
 const MerchantSubProduct = require('../models').MerchantSubProduct;
 
-// insert Merchant Sub Product
 const addMerchantSubProduct = async (req, res) => {
     try {
-        const body = req.body;
-        const checkData = { merchant_id: body.merchant_id, product_id: body.product_id, is_active: true }
- 
-        const isExist = await MerchantSubProduct.findOne({ where: checkData });
-        if (isExist) return res.status(404).send({ status: false, message: "This Merchant Sub Product is already exist. Please try another one." });
+        const { merchant_id, product_id } = req.body;
 
-        const addMerchantSubProductData = await MerchantSubProduct.create(body);
-        if (!addMerchantSubProductData) return res.status(400).send({ status: false, message: "Something went wrong. while insert Merchant Sub Product data.!!", data: {} });
+        if (!merchant_id || !product_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Merchant ID and Product ID are required."
+            });
+        }
 
-        return res.status(201).send({ status: true, message: "Merchant Sub Product added successfully.", data: addMerchantSubProductData, });
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
-    }
-}
+        const existingSubProduct = await MerchantSubProduct.findOne({
+            where: { merchant_id, product_id, is_active: true }
+        });
+        if (existingSubProduct) {
+            return res.status(409).json({
+                status: false,
+                message: "This Merchant Sub Product already exists. Please try another one."
+            });
+        }
 
-// update Merchant Sub Product
-const updateMerchantSubProduct = async (req, res) => {
-    try {
-        const body = req.body;
-        const { merchant_sub_product_id } = req.query;
+        const newSubProduct = await MerchantSubProduct.create({ merchant_id, product_id });
+        if (!newSubProduct) {
+            return res.status(500).json({
+                status: false,
+                message: "Something went wrong while inserting Merchant Sub Product data.",
+                data: {}
+            });
+        }
 
-        const checkMerchantSubProduct = await MerchantSubProduct.findByPk(merchant_sub_product_id);
-        if (!checkMerchantSubProduct) return res.status(404).send({ status: false, message: "This Merchant Sub Product does not exist. Please check Merchant Sub Product ID." });
-
-        const [affectedRows] = await MerchantSubProduct.update(body, { where: { id: merchant_sub_product_id } });
-        if (affectedRows === 0) return res.status(400).send({ status: false, message: "No changes were made to the Merchant Sub Product data. Please check the provided information.", data: {} });
-
-        return res.status(200).send({ status: true, message: "Merchant Sub Product updated successfully.", data: {} });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], });
+        return res.status(201).json({
+            status: true,
+            message: "Merchant Sub Product added successfully.",
+            data: newSubProduct
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
 
-// get  Merchant Sub Product List
+const updateMerchantSubProduct = async (req, res) => {
+    try {
+        const { merchant_sub_product_id } = req.query;
+        const updates = req.body;
+
+        if (!merchant_sub_product_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Merchant Sub Product ID is required."
+            });
+        }
+
+        const existingSubProduct = await MerchantSubProduct.findByPk(merchant_sub_product_id);
+        if (!existingSubProduct) {
+            return res.status(404).json({
+                status: false,
+                message: "This Merchant Sub Product does not exist. Please check the Merchant Sub Product ID."
+            });
+        }
+
+        const [affectedRows] = await MerchantSubProduct.update(updates, {
+            where: { id: merchant_sub_product_id }
+        });
+
+        if (affectedRows === 0) {
+            return res.status(400).json({
+                status: false,
+                message: "No changes were made to the Merchant Sub Product data. Please check the provided information.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Merchant Sub Product updated successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
+
 const getMerchantSubProductList = async (req, res) => {
     try {
         const { merchant_id } = req.query;
 
         const queryCondition = merchant_id ? { where: { merchant_id } } : {};
 
-        const getMerchantSubProductList = await MerchantSubProduct.findAll(queryCondition);
-        if (getMerchantSubProductList.length === 0) return res.status(404).send({ status: false, message: "No Merchant Sub Products found for the given category.", data: [] });
+        const merchantSubProducts = await MerchantSubProduct.findAll(queryCondition);
 
-        return res.status(200).send({ status: true, message: "Merchant Sub Product list retrieved successfully.", data: getMerchantSubProductList });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], error: Err });
+        if (merchantSubProducts.length === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "No Merchant Sub Products found for the given Merchant ID.",
+                data: []
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Merchant Sub Product list retrieved successfully.",
+            data: merchantSubProducts
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
+const getMerchantSubProduct = async (req, res) => {
+    try {
+        const { merchant_sub_product_id } = req.query;
+
+        if (!merchant_sub_product_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Merchant Sub Product ID is required.",
+                data: {}
+            });
+        }
+
+        const merchantSubProduct = await MerchantSubProduct.findByPk(merchant_sub_product_id);
+
+        if (!merchantSubProduct) {
+            return res.status(404).json({
+                status: false,
+                message: "Merchant Sub Product data not found.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Merchant Sub Product retrieved successfully.",
+            data: merchantSubProduct
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
 
 
-// get  MerchantSubProduct by merchant_sub_product_id
-const getMerchantSubProduct = async (req, res) => {
-    try {
-        const { merchant_sub_product_id } = req.query
-
-        const getMerchantSubProductData = await MerchantSubProduct.findByPk(merchant_sub_product_id);
-        if (!getMerchantSubProductData) return res.status(400).send({ status: false, message: "Merchant Sub Product data not found", data: {} });
-
-        return res.status(200).send({ status: true, message: "Merchant Sub Product get successfully", data: getMerchantSubProductData, });
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
-    }
-}
-
 const deleteMerchantSubProduct = async (req, res) => {
     try {
         const { merchant_sub_product_id } = req.query;
-
-        const checkMerchantSubProduct = await MerchantSubProduct.destroy({ where: { id: merchant_sub_product_id } });
-        if (!checkMerchantSubProduct) return res.status(404).send({ status: false, message: "This Merchant Sub Product does not exist. Please check Merchant Sub Product ID." });
-
-        return res.status(200).send({ status: true, message: `Merchant Sub Product deleted successfully.`, data: {} });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], error: Err });
+ 
+        if (!merchant_sub_product_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Merchant Sub Product ID is required.",
+                data: {}
+            });
+        }
+ 
+        const affectedRows = await MerchantSubProduct.destroy({ where: { id: merchant_sub_product_id } });
+ 
+        if (affectedRows === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "This Merchant Sub Product does not exist. Please check the Merchant Sub Product ID.",
+                data: {}
+            });
+        }
+ 
+        return res.status(200).json({
+            status: true,
+            message: "Merchant Sub Product deleted successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
 
