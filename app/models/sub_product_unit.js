@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'user_sub_products',
+        model: 'merchant_sub_products',
         key: 'id'
       }
     }
@@ -34,12 +34,12 @@ module.exports = (sequelize, DataTypes) => {
   SubProductUnit.associate = function(models) {
     SubProductUnit.belongsTo(models.Unit, {
       foreignKey: 'unit_id',
-      as: 'unit'
+      as: 'units'
     });
 
-    SubProductUnit.belongsTo(models.UserSubProduct, {
+    SubProductUnit.belongsTo(models.MerchantSubProduct, {
       foreignKey: 'sub_product_id',
-      as: 'subProduct'
+      as: 'merchant_sub_products'
     });
   };
 
