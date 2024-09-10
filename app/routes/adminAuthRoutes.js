@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminAuthController = require('../controllers/AdminAuthController');
 const { signupValidationRules, loginValidationRules, validate } = require('../validators/Validator');
-const { authenticateAdminJWT } = require('../middlewares/authenticateJWT')
+const { authenticateAdminJWT } = require('../middlewares/authenticateAdminJWT')
 
 router.post('/signup', signupValidationRules(), validate, adminAuthController.signup);
 
