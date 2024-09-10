@@ -1,82 +1,165 @@
 const Unit = require('../models').Unit;
 
-// insert Unit
+
 const addUnit = async (req, res) => {
     try {
-        const body = req.body;
+        const { name, code } = req.body;
 
-        const isExist = await Unit.findOne({ where: { name: body.name, code: body.code } });
-        if (isExist) return res.status(404).send({ status: false, message: "This Unit is already exist. Please try another one." });
+        const existingUnit = await Unit.findOne({ where: { name, code } });
+        if (existingUnit) {
+            return res.status(409).json({
+                status: false,
+                message: "This Unit already exists. Please try another one.",
+                data: {}
+            });
+        }
 
-        const addUnitData = await Unit.create(body);
-        if (!addUnitData) return res.status(400).send({ status: false, message: "Something went wrong. while insert Unit data.!!", data: {} });
+        const newUnit = await Unit.create({ name, code });
+        if (!newUnit) {
+            return res.status(400).json({
+                status: false,
+                message: "Something went wrong while inserting Unit data.",
+                data: {}
+            });
+        }
 
-        return res.status(200).send({ status: true, message: "Unit added successfully.", data: addUnitData, });
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
+        return res.status(201).json({
+            status: true,
+            message: "Unit added successfully.",
+            data: newUnit
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
-}
+};
 
-// update Unit
+
 const updateUnit = async (req, res) => {
     try {
-        const body = req.body;
         const { unit_id } = req.query;
+        const body = req.body;
 
-        const checkUnit = await Unit.findByPk(unit_id);
-        if (!checkUnit) return res.status(404).send({ status: false, message: "This Unit does not exist. Please check Unit ID." });
+        const existingUnit = await Unit.findByPk(unit_id);
+        if (!existingUnit) {
+            return res.status(404).json({
+                status: false,
+                message: "This Unit does not exist. Please check Unit ID.",
+                data: {}
+            });
+        }
 
         const [affectedRows] = await Unit.update(body, { where: { id: unit_id } });
-        if (affectedRows === 0) return res.status(400).send({ status: false, message: "No changes were made to the Unit data. Please check the provided information.", data: {} });
+        if (affectedRows === 0) {
+            return res.status(400).json({
+                status: false,
+                message: "No changes were made to the Unit data. Please check the provided information.",
+                data: {}
+            });
+        }
 
-        return res.status(200).send({ status: true, message: "Unit updated successfully.", data: {} });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], });
+        return res.status(200).json({
+            status: true,
+            message: "Unit updated successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
 
-// get  Unit List
+
 const getUnitList = async (req, res) => {
-    try {  
-        const getUnitList = await Unit.findAll();
-        if (getUnitList.length === 0) return res.status(404).send({ status: false, message: "No units found for the given category.", data: [] });
+    try {
+        const units = await Unit.findAll();
 
-        return res.status(200).send({ status: true, message: "Unit list retrieved successfully.", data: getUnitList });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], error: Err });
+        if (units.length === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "No units found.",
+                data: []
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Unit list retrieved successfully.",
+            data: units
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
 
-
-// get  Unit by unit_id
 const getUnit = async (req, res) => {
     try {
-        const { unit_id } = req.query
+        const { unit_id } = req.query;
 
-        const getUnitData = await Unit.findByPk(unit_id);
-        if (!getUnitData) return res.status(400).send({ status: false, message: "Unit data not found", data: {} });
+        const unit = await Unit.findByPk(unit_id);
 
-        return res.status(200).send({ status: true, message: "Unit get successfully", data: getUnitData, });
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
+        if (!unit) {
+            return res.status(404).json({
+                status: false,
+                message: "Unit not found.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Unit retrieved successfully.",
+            data: unit
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
-}
+};
 
 const deleteUnit = async (req, res) => {
     try {
         const { unit_id } = req.query;
 
-        const checkUnit = await Unit.destroy({ where: { id: unit_id } });
-        if (!checkUnit) return res.status(404).send({ status: false, message: "This Unit does not exist. Please check Unit ID." });
+        const deletedRows = await Unit.destroy({ where: { id: unit_id } });
 
-        return res.status(200).send({ status: true, message: `Unit deleted successfully.`, data: {} });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], error: Err });
+        if (deletedRows === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "This Unit does not exist. Please check the Unit ID.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Unit deleted successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
 
