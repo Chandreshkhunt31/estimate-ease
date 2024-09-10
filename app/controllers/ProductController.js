@@ -1,86 +1,194 @@
 const Product = require('../models').Product;
 
-// insert Product
 const addProduct = async (req, res) => {
     try {
-        const body = req.body;
+        const { name, business_category_id } = req.body;
 
-        const isExist = await Product.findOne({ where: { name: body.name, business_category_id: body.business_category_id } });
-        if (isExist) return res.status(404).send({ status: false, message: "This Product is already exist. Please try another one." });
+        if (!name || !business_category_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Product name and Business Category ID are required."
+            });
+        }
 
-        const addProductData = await Product.create(body);
-        if (!addProductData) return res.status(400).send({ status: false, message: "Something went wrong. while insert Product data.!!", data: {} });
+        const existingProduct = await Product.findOne({
+            where: { name, business_category_id }
+        });
 
-        return res.status(201).send({ status: true, message: "Product added successfully.", data: addProductData, });
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
-    }
-}
+        if (existingProduct) {
+            return res.status(409).json({
+                status: false,
+                message: "This product already exists. Please try another one."
+            });
+        }
 
-// update Product
-const updateProduct = async (req, res) => {
-    try {
-        const body = req.body;
-        const { product_id } = req.query;
+        const newProduct = await Product.create({ name, business_category_id });
+        if (!newProduct) {
+            return res.status(500).json({
+                status: false,
+                message: "Something went wrong while inserting product data.",
+                data: {}
+            });
+        }
 
-        const checkProduct = await Product.findByPk(product_id);
-        if (!checkProduct) return res.status(404).send({ status: false, message: "This Product does not exist. Please check Product ID." });
-
-        const [affectedRows] = await Product.update(body, { where: { id: product_id } });
-        if (affectedRows === 0) return res.status(400).send({ status: false, message: "No changes were made to the Product data. Please check the provided information.", data: {} });
-
-        return res.status(200).send({ status: true, message: "Product updated successfully.", data: {} });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], });
+        return res.status(201).json({
+            status: true,
+            message: "Product added successfully.",
+            data: newProduct
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
 
-// get  Product List
+
+const updateProduct = async (req, res) => {
+    try {
+        const { product_id } = req.query;
+        const updateData = req.body;
+
+        if (!product_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Product ID is required."
+            });
+        }
+        const product = await Product.findByPk(product_id);
+        if (!product) {
+            return res.status(404).json({
+                status: false,
+                message: "This Product does not exist. Please check the Product ID."
+            });
+        }
+
+        const [affectedRows] = await Product.update(updateData, { where: { id: product_id } });
+
+        if (affectedRows === 0) {
+            return res.status(400).json({
+                status: false,
+                message: "No changes were made to the Product data. Please check the provided information.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Product updated successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
+
 const getProductList = async (req, res) => {
     try {
         const { business_category_id } = req.query;
 
         const queryCondition = business_category_id ? { where: { business_category_id } } : {};
 
-        const getProductList = await Product.findAll(queryCondition);
-        if (getProductList.length === 0) return res.status(404).send({ status: false, message: "No products found for the given category.", data: [] });
+        const products = await Product.findAll(queryCondition);
 
-        return res.status(200).send({ status: true, message: "Product list retrieved successfully.", data: getProductList });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], error: Err });
+        if (products.length === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "No products found for the given category.",
+                data: []
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Product list retrieved successfully.",
+            data: products
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
 
-
-// get  Product by product_id
 const getProduct = async (req, res) => {
     try {
-        const { product_id } = req.query
+        const { product_id } = req.query;
 
-        const getProductData = await Product.findByPk(product_id);
-        if (!getProductData) return res.status(400).send({ status: false, message: "Product data not found", data: {} });
+        if (!product_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Product ID is required."
+            });
+        }
 
-        return res.status(200).send({ status: true, message: "Product get successfully", data: getProductData, });
-    } catch (Err) {
-        console.log(Err);
-        return res.status(400).send({ status: false, message: "Something is wrong.Please try again.", data: [], error: Err });
+        const product = await Product.findByPk(product_id);
+        if (!product) {
+            return res.status(404).json({
+                status: false,
+                message: "Product not found.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Product retrieved successfully.",
+            data: product
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
-}
+};
 
 const deleteProduct = async (req, res) => {
     try {
         const { product_id } = req.query;
 
-        const checkProduct = await Product.destroy({ where: { id: product_id } });
-        if (!checkProduct) return res.status(404).send({ status: false, message: "This Product does not exist. Please check Product ID." });
+        if (!product_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Product ID is required."
+            });
+        }
 
-        return res.status(200).send({ status: true, message: `Product deleted successfully.`, data: {} });
-    } catch (Err) {
-        console.error(Err);
-        return res.status(500).send({ status: false, message: "Something went wrong. Please try again.", data: [], error: Err });
+        const deletedRows = await Product.destroy({ where: { id: product_id } });
+        if (deletedRows === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "This Product does not exist. Please check the Product ID."
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Product deleted successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
     }
 };
 
