@@ -20,9 +20,9 @@ const authenticateUserJWT = (req, res, next) => {
       req.id = user.id;
       req.email = user.email;
 
-      const admin = await User.findOne({ where: { id: user.id, email: user.email, } });
+      const user = await User.findOne({ where: { id: user.id, email: user.email, } });
 
-      if (admin) {
+      if (user) {
         return next();
       }
 
