@@ -1,4 +1,5 @@
 const MerchantSubProduct = require('../models').MerchantSubProduct;
+const SubProductUnit = require('../models').SubProductUnit;
 
 const addMerchantSubProduct = async (req, res) => {
     try {
@@ -96,10 +97,16 @@ const updateMerchantSubProduct = async (req, res) => {
 const getMerchantSubProductList = async (req, res) => {
     try {
         const { merchant_id } = req.query;
-
+  
         const queryCondition = merchant_id ? { where: { merchant_id } } : {};
-
-        const merchantSubProducts = await MerchantSubProduct.findAll(queryCondition);
+ 
+        const merchantSubProducts = await MerchantSubProduct.findAll({
+            ...queryCondition,
+            include: [{
+                model: SubProductUnit,
+                as: 'SubProductUnits' 
+            }]
+        });
 
         if (merchantSubProducts.length === 0) {
             return res.status(404).json({
@@ -118,7 +125,7 @@ const getMerchantSubProductList = async (req, res) => {
         console.error(error);
         return res.status(500).json({
             status: false,
-            message: "An error occurred. Please try again.",
+            message: "An error occurred while retrieving Merchant Sub Products.",
             error: error.message
         });
     }
@@ -135,8 +142,13 @@ const getMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
-
-        const merchantSubProduct = await MerchantSubProduct.findByPk(merchant_sub_product_id);
+ 
+        const merchantSubProduct = await MerchantSubProduct.findByPk(merchant_sub_product_id, {
+            include: [{
+                model: SubProductUnit,
+                as: 'SubProductUnits'  
+            }]
+        });
 
         if (!merchantSubProduct) {
             return res.status(404).json({
@@ -174,8 +186,10 @@ const deleteMerchantSubProduct = async (req, res) => {
             });
         }
 
+        await SubProductUnit.destroy({ where: { sub_product_id: merchant_sub_product_id } });
+ 
         const affectedRows = await MerchantSubProduct.destroy({ where: { id: merchant_sub_product_id } });
-
+         
         if (affectedRows === 0) {
             return res.status(404).json({
                 status: false,
