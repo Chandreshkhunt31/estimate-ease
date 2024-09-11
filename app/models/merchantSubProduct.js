@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'merchant_products',
+        model: 'merchantProducts',
         key: 'id'
       }
     },
@@ -52,7 +52,7 @@ module.exports = (sequelize, DataTypes) => {
 
     MerchantSubProduct.belongsTo(models.MerchantProduct, {
       foreignKey: 'merchant_product_id',
-      as: 'merchant_products'
+      as: 'merchantProducts'
     });
 
     MerchantSubProduct.belongsTo(models.Merchant, {

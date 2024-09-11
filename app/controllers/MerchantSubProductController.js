@@ -12,7 +12,7 @@ const addMerchantSubProduct = async (req, res) => {
         }
 
         const existingSubProduct = await MerchantSubProduct.findOne({
-            where: { merchant_id, merchant_product_id, is_active: true }
+            where: { merchant_id, merchant_product_id, name, is_active: true }
         });
         if (existingSubProduct) {
             return res.status(409).json({
