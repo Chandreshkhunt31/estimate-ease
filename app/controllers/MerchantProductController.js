@@ -7,13 +7,6 @@ const addMerchantProduct = async (req, res) => {
     try {
         const { merchant_id, product_id } = req.body;
 
-        if (!merchant_id || !product_id) {
-            return res.status(400).json({
-                status: false,
-                message: "Merchant ID and Product ID are required."
-            });
-        }
-
         const isExist = await MerchantProduct.findOne({ where: { merchant_id, product_id, is_active: true } });
         if (isExist) {
             return res.status(409).json({

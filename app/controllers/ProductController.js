@@ -4,13 +4,6 @@ const addProduct = async (req, res) => {
     try {
         const { name, business_category_id } = req.body;
 
-        if (!name || !business_category_id) {
-            return res.status(400).json({
-                status: false,
-                message: "Product name and Business Category ID are required."
-            });
-        }
-
         const existingProduct = await Product.findOne({
             where: { name, business_category_id }
         });

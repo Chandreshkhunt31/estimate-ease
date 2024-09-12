@@ -3,14 +3,7 @@ const Merchant = require('../models').Merchant;
 const addMerchant = async (req, res) => {
     try {
         const { name, business_category_id, address, city, state } = req.body;
-
-        if (!name || !business_category_id || !address || !city || !state) {
-            return res.status(400).json({
-                status: false,
-                message: "All fields (name, business_category_id, address, city, state) are required."
-            });
-        }
-
+ 
         const isExist = await Merchant.findOne({ where: { name } });
         if (isExist) {
             return res.status(409).json({

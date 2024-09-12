@@ -5,13 +5,6 @@ const addMerchantSubProduct = async (req, res) => {
     try {
         const { merchant_id, merchant_product_id, name, price } = req.body;
 
-        if (!merchant_id || !merchant_product_id || !name) {
-            return res.status(400).json({
-                status: false,
-                message: "Merchant ID and Product ID are required."
-            });
-        }
-
         const existingSubProduct = await MerchantSubProduct.findOne({
             where: { merchant_id, merchant_product_id, name, is_active: true }
         });
@@ -97,14 +90,14 @@ const updateMerchantSubProduct = async (req, res) => {
 const getMerchantSubProductList = async (req, res) => {
     try {
         const { merchant_id } = req.query;
-  
+
         const queryCondition = merchant_id ? { where: { merchant_id } } : {};
- 
+
         const merchantSubProducts = await MerchantSubProduct.findAll({
             ...queryCondition,
             include: [{
                 model: SubProductUnit,
-                as: 'SubProductUnits' 
+                as: 'SubProductUnits'
             }]
         });
 
@@ -142,11 +135,11 @@ const getMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
- 
+
         const merchantSubProduct = await MerchantSubProduct.findByPk(merchant_sub_product_id, {
             include: [{
                 model: SubProductUnit,
-                as: 'SubProductUnits'  
+                as: 'SubProductUnits'
             }]
         });
 
@@ -187,9 +180,9 @@ const deleteMerchantSubProduct = async (req, res) => {
         }
 
         await SubProductUnit.destroy({ where: { sub_product_id: merchant_sub_product_id } });
- 
+
         const affectedRows = await MerchantSubProduct.destroy({ where: { id: merchant_sub_product_id } });
-         
+
         if (affectedRows === 0) {
             return res.status(404).json({
                 status: false,

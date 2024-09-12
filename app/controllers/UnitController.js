@@ -5,9 +5,6 @@ const addUnit = async (req, res) => {
     try {
         const { name, code } = req.body;
 
-        console.log(req.body);
-        
-
         const existingUnit = await Unit.findOne({ where: { name, code } });
         if (existingUnit) {
             return res.status(409).json({
