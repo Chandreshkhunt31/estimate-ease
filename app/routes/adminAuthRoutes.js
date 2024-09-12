@@ -6,6 +6,7 @@ const { merchantValidation } = require('../validators/merchantValidator');
 const { merchantProductValidation } = require('../validators/merchantProductValidator');
 const { merchantSubProductValidation } = require('../validators/merchantSubProductValidator');
 const { productValidation } = require('../validators/productValidator');
+const { businessCategoryValidation } = require('../validators/businessCategoryValidator');
 const { authenticateAdminJWT } = require('../middlewares/authenticateAdminJWT')
 
 router.post('/signup', signupValidationRules(), validate, adminAuthController.signup);
@@ -13,7 +14,7 @@ router.post('/signup', signupValidationRules(), validate, adminAuthController.si
 router.post('/login', loginValidationRules(), validate, adminAuthController.login);
 
 const businessCategoryController = require('../controllers/businessCategoryController')
-router.post('/business-category/add', authenticateAdminJWT, businessCategoryController.addBusinessCategory);
+router.post('/business-category/add', businessCategoryValidation(), validate , authenticateAdminJWT, businessCategoryController.addBusinessCategory);
 router.get("/business-category/list", authenticateAdminJWT, businessCategoryController.getBusinessCategoryList);
 router.get("/business-category/get", authenticateAdminJWT, businessCategoryController.getBusinessCategory);
 
