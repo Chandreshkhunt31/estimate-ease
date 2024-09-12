@@ -13,9 +13,14 @@ const merchantSubProductValidation = () => {
     body('name')
       .optional()
       .notEmpty().withMessage('Name cannot be empty'),
+    body().custom(body => {
+      if (!body.merchant_id && (!body.merchant_product_id || !body.name)) {
+        throw new Error('Either Merchant ID must be present or both Merchant Product ID and Name must be provided');
+      }
+      return true;
+    }),
   ];
 };
-
 
 module.exports = {
   merchantSubProductValidation
