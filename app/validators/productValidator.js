@@ -9,10 +9,16 @@ const productValidation = () => {
     body('business_category_id')
       .optional()
       .isInt().withMessage('Business Category ID must be an integer'),
+
+    body().custom(body => {
+      if (!body.name && !body.business_category_id) {
+        throw new Error('Either Name or Business Category ID is required');
+      }
+      return true;
+    }),
   ];
 };
 
-
 module.exports = {
-  productValidation 
+  productValidation
 };
