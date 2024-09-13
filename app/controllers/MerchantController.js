@@ -1,10 +1,11 @@
 const Merchant = require('../models').Merchant;
+const BusinessCategory = require('../models').BusinessCategory;
 
 const addMerchant = async (req, res) => {
     try {
         const { name, business_category_id, address, city, state } = req.body;
  
-        const isExist = await Merchant.findOne({ where: { name } });
+        const isExist = await Merchant.findOne({ where: { name, business_category_id, address, city, state } });
         if (isExist) {
             return res.status(409).json({
                 status: false,
@@ -87,7 +88,12 @@ const updateMerchant = async (req, res) => {
 
 const getMerchantList = async (req, res) => {
     try {
-        const merchantList = await Merchant.findAll();
+        const merchantList = await Merchant.findAll({
+            include: [{
+              model: BusinessCategory,
+              as: 'businessCategory',   
+            }]
+          });
 
         if (!merchantList || merchantList.length === 0) {
             return res.status(404).json({
