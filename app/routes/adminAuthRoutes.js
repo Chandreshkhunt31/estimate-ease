@@ -17,6 +17,7 @@ const businessCategoryController = require('../controllers/businessCategoryContr
 router.post('/business-category/add', businessCategoryValidation(), validate , authenticateAdminJWT, businessCategoryController.addBusinessCategory);
 router.get("/business-category/list", authenticateAdminJWT, businessCategoryController.getBusinessCategoryList);
 router.get("/business-category/get", authenticateAdminJWT, businessCategoryController.getBusinessCategory);
+router.put("/business-category/edit", authenticateAdminJWT, businessCategoryController.updateBusinessCategory);
 
 const merchantController = require('../controllers/merchantController')
 router.post('/merchant/add', merchantValidation(), validate, authenticateAdminJWT, merchantController.addMerchant);
