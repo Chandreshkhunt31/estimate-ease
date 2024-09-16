@@ -66,10 +66,10 @@ router.get("/sub-product-unit/get", authenticateAdminJWT, subProductUnitControll
 router.delete("/sub-product-unit/delete", authenticateAdminJWT, subProductUnitController.deleteSubProductUnit);
 
 const userController = require('../controllers/userController')
-router.post('/user/add', userController.addUser);
-router.put("/user/edit", userController.updateUser);
-router.get("/user/list", userController.getUserList);
-router.get("/user/get", userController.getUser);
-router.delete("/user/delete", userController.deleteUser);
+router.post('/user/add', authenticateAdminJWT, userController.addUser);
+router.put("/user/edit", authenticateAdminJWT, userController.updateUser);
+router.get("/user/list", authenticateAdminJWT, userController.getUserList);
+router.get("/user/get", authenticateAdminJWT, userController.getUser);
+router.delete("/user/delete", authenticateAdminJWT, userController.deleteUser);
 
 module.exports = router;
