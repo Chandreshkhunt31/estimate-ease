@@ -23,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'business_category_id',
       as: 'merchants' // alias for the association
     });
+    BusinessCategory.hasMany(models.Product, {
+      foreignKey: 'business_category_id',
+      as: 'products' // alias for the association
+    });
   };
 
   return BusinessCategory;

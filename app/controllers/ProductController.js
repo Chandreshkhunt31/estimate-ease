@@ -1,4 +1,5 @@
 const Product = require('../models').Product;
+const BusinessCategory = require('../models').BusinessCategory;
 
 const addProduct = async (req, res) => {
     try {
@@ -91,7 +92,13 @@ const getProductList = async (req, res) => {
 
         const queryCondition = business_category_id ? { where: { business_category_id } } : {};
 
-        const products = await Product.findAll(queryCondition);
+        const products = await Product.findAll({
+            ...queryCondition,
+            include: [{
+                model: BusinessCategory,
+                as: 'businessCategory',
+            }]
+        });
 
         if (products.length === 0) {
             return res.status(404).json({
