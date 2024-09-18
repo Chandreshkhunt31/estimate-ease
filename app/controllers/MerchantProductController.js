@@ -1,4 +1,6 @@
 const MerchantProduct = require('../models').MerchantProduct;
+const Merchant = require('../models').Merchant;
+const Product = require('../models').Product;
 const MerchantSubProduct = require('../models').MerchantSubProduct;
 const SubProductUnit = require('../models').SubProductUnit;
 
@@ -44,6 +46,8 @@ const updateMerchantProduct = async (req, res) => {
     try {
         const { merchant_product_id } = req.query;
         const updateData = req.body;
+        console.log(updateData);
+        
 
         if (!merchant_product_id) {
             return res.status(400).json({
@@ -92,7 +96,13 @@ const getMerchantProductList = async (req, res) => {
 
         const queryCondition = merchant_id ? { where: { merchant_id } } : {};
 
-        const merchantProductList = await MerchantProduct.findAll(queryCondition);
+        const merchantProductList = await MerchantProduct.findAll({...queryCondition,
+            include: [{
+                model: Product,
+                as: 'products',
+            },
+        ]
+        });
 
         if (merchantProductList.length === 0) {
             return res.status(404).json({
