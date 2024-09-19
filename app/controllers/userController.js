@@ -6,10 +6,10 @@ const saltRounds = 10;
 
 const addUser = async (req, res) => {
     try {
-        let { user_id, name, email, phone_number, password } = req.body;
+        let { merchant_id, name, email, phone_number, password } = req.body;
 
         const existingUser = await User.findOne({
-            where: { user_id, name, email, phone_number }
+            where: { merchant_id, name, email, phone_number }
         });
 
         if (existingUser) {
@@ -21,7 +21,7 @@ const addUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         password = hashedPassword;
-        const newUser = await User.create({ user_id, name, email, phone_number, password });
+        const newUser = await User.create({ merchant_id, name, email, phone_number, password });
         if (!newUser) {
             return res.status(500).json({
                 status: false,
@@ -93,9 +93,9 @@ const updateUser = async (req, res) => {
 
 const getUserList = async (req, res) => {
     try {
-        const { user_id } = req.query;
+        const { merchant_id } = req.query;
 
-        const queryCondition = user_id ? { where: { user_id } } : {};
+        const queryCondition = merchant_id ? { where: { merchant_id } } : {};
 
         const users = await User.findAll(queryCondition);
 
