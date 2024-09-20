@@ -18,16 +18,21 @@ module.exports = (sequelize, DataTypes) => {
         model: 'businessCategories',
         key: 'id'
       }
+    },
+    deleted_at: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     tableName: 'products',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at',
-    underscored: true
+    underscored: true,
+    paranoid: true
   });
 
-  Product.associate = function(models) {
+  Product.associate = function (models) {
     Product.belongsTo(models.BusinessCategory, {
       foreignKey: 'business_category_id',
       as: 'businessCategory'

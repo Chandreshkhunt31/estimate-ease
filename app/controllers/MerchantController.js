@@ -1,5 +1,9 @@
 const Merchant = require('../models').Merchant;
 const BusinessCategory = require('../models').BusinessCategory;
+const MerchantSubProduct = require('../models').MerchantSubProduct;
+const MerchantProduct = require('../models').MerchantProduct;
+const SubProductUnit = require('../models').SubProductUnit;
+const User = require('../models').User;
 
 const addMerchant = async (req, res) => {
     try {
@@ -164,6 +168,16 @@ const deleteMerchant = async (req, res) => {
                 message: "Merchant ID is required."
             });
         }
+        // Delete merchant Product
+        const MerchantSubProductData = await MerchantSubProduct.findAll({ where: { merchant_id: merchant_id } }); 
+        await Promise.all(MerchantSubProductData.map(item => SubProductUnit.destroy({ where: { sub_product_id: item.id } }))); 
+        await MerchantSubProduct.destroy({ where: { merchant_id: merchant_id } });
+         
+        // Delete merchant Product 
+        await MerchantProduct.destroy({ where: { merchant_id: merchant_id } });
+        
+        // Delete merchant user 
+        await User.destroy({ where: { merchant_id: merchant_id } });
 
         const deletedRows = await Merchant.destroy({ where: { id: merchant_id } });
 
