@@ -1,9 +1,10 @@
 const MerchantSubProduct = require('../models').MerchantSubProduct;
 const SubProductUnit = require('../models').SubProductUnit;
+const Unit = require('../models').Unit;
 
 const addMerchantSubProduct = async (req, res) => {
     try {
-        const { merchant_id, merchant_product_id, name, price } = req.body;
+        let { merchant_id, merchant_product_id, name, price, unit_id } = req.body;
 
         const existingSubProduct = await MerchantSubProduct.findOne({
             where: { merchant_id, merchant_product_id, name, is_active: true }
@@ -23,6 +24,13 @@ const addMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
+        const sub_product_id = newSubProduct.id
+
+        unit_id.map(async(item)=>{
+            console.log(item);
+            unit_id = item
+            await SubProductUnit.create({ unit_id, sub_product_id });
+        })
 
         return res.status(201).json({
             status: true,
@@ -70,7 +78,40 @@ const updateMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
+        const sub_product_id = merchant_sub_product_id
+        console.log(sub_product_id, "sub_product_id");
+        
+        const queryCondition = sub_product_id ? { where: { sub_product_id } } : {};
+        const units = await SubProductUnit.findAll({
+            ...queryCondition, include: [{
+                model: Unit,
+                as: 'units',
+            },
+            ]
+        });  
 
+        const currentUnits = units.map(unit => unit.unit_id);
+ 
+        const unitsToCreate = updates.unit_id.filter(unitId => !currentUnits.includes(unitId));
+        const unitsToDelete = currentUnits.filter(unitId => !updates.unit_id.includes(unitId));
+     
+        for (const unitId of unitsToCreate) {
+          await SubProductUnit.create({
+            sub_product_id: merchant_sub_product_id,
+            unit_id: unitId,
+             
+          });
+        }
+     
+        for (const unitId of unitsToDelete) {
+          await SubProductUnit.destroy({
+            where: {
+              sub_product_id: merchant_sub_product_id,
+              unit_id: unitId
+            }
+          });
+        }
+ 
         return res.status(200).json({
             status: true,
             message: "Merchant Sub Product updated successfully.",
@@ -89,15 +130,21 @@ const updateMerchantSubProduct = async (req, res) => {
 
 const getMerchantSubProductList = async (req, res) => {
     try {
-        const { merchant_id } = req.query;
+        const { merchant_product_id } = req.query;
 
-        const queryCondition = merchant_id ? { where: { merchant_id } } : {};
+        const queryCondition = merchant_product_id ? { where: { merchant_product_id } } : {};
 
         const merchantSubProducts = await MerchantSubProduct.findAll({
             ...queryCondition,
             include: [{
                 model: SubProductUnit,
-                as: 'SubProductUnits'
+                as: 'SubProductUnits',
+                include: [
+                    {
+                        model: Unit,
+                        as: 'units'
+                    }
+                ]
             }]
         });
 

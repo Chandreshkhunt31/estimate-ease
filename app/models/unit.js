@@ -23,7 +23,12 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true
   });
 
-  Unit.associate = function (models) { };
+  Unit.associate = function (models) {
+    Unit.hasMany(models.SubProductUnit, {
+      foreignKey: 'unit_id',
+      as: 'sub_products_units'  
+    });
+   };
 
   return Unit;
 };

@@ -1,4 +1,5 @@
 const SubProductUnit = require('../models').SubProductUnit;
+const Unit = require('../models').Unit;
 
 
 const addSubProductUnit = async (req, res) => {
@@ -81,7 +82,16 @@ const updateSubProductUnit = async (req, res) => {
 
 const getSubProductUnitList = async (req, res) => {
     try {
-        const units = await SubProductUnit.findAll();
+
+        const { sub_product_id } = req.query;
+       
+        const queryCondition = sub_product_id ? { where: { sub_product_id } } : {};
+        const units = await SubProductUnit.findAll({
+            ...queryCondition, include: [{
+                model: Unit,
+                as: 'units',
+            }]
+        });
 
         if (units.length === 0) {
             return res.status(404).json({
