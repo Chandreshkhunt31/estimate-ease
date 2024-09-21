@@ -1,5 +1,8 @@
 const Product = require('../models').Product;
 const BusinessCategory = require('../models').BusinessCategory;
+const MerchantProduct = require('../models').MerchantProduct;
+const { Op } = require('sequelize');
+
 
 const addProduct = async (req, res) => {
     try {
@@ -88,7 +91,7 @@ const updateProduct = async (req, res) => {
 
 const getProductList = async (req, res) => {
     try {
-        const { business_category_id } = req.query;
+        const { business_category_id, is_exist, merchant_id } = req.query;
 
         const queryCondition = business_category_id ? { where: { business_category_id } } : {};
 
@@ -99,6 +102,30 @@ const getProductList = async (req, res) => {
                 as: 'businessCategory',
             }]
         });
+
+        if(is_exist == "true"){ 
+            const merchantProductList = await MerchantProduct.findAll({ where: { merchant_id } }); 
+            const data = merchantProductList.map((item) => item.product_id) 
+            console.log(data);
+
+            const ExistMerchantQueryCondition = { where: { business_category_id, id: { [Op.notIn]: data } } } 
+
+            const isExistMerchantProductList = await Product.findAll({
+                ...ExistMerchantQueryCondition,
+                include: [{
+                    model: BusinessCategory,
+                    as: 'businessCategory', 
+                },
+                ]
+            });
+            // if (merchantProductList.length === 0) {
+                return res.status(404).json({
+                    status: false,
+                    message: "No merchant products found for the given criteria.",
+                    data: isExistMerchantProductList
+                });
+            // }
+        }
 
         if (products.length === 0) {
             return res.status(404).json({

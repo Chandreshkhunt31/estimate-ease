@@ -36,6 +36,7 @@ router.delete("/product/delete", authenticateAdminJWT, productController.deleteP
 const merchantProductController = require('../controllers/merchantProductController')
 
 router.post('/merchant-product/add', merchantProductValidation(), validate, authenticateAdminJWT, merchantProductController.addMerchantProduct);
+router.get('/merchant-product/duplicate', authenticateAdminJWT, merchantProductController.duplicateMerchant);
 router.put("/merchant-product/edit", authenticateAdminJWT, merchantProductController.updateMerchantProduct);
 router.get("/merchant-product/list", authenticateAdminJWT, merchantProductController.getMerchantProductList);
 router.get("/merchant-product/get", authenticateAdminJWT, merchantProductController.getMerchantProduct);

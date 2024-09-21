@@ -47,7 +47,7 @@ const updateMerchantProduct = async (req, res) => {
         const { merchant_product_id } = req.query;
         const updateData = req.body;
         console.log(updateData);
-        
+
 
         if (!merchant_product_id) {
             return res.status(400).json({
@@ -92,17 +92,37 @@ const updateMerchantProduct = async (req, res) => {
 
 const getMerchantProductList = async (req, res) => {
     try {
-        const { merchant_id } = req.query;
+        const { merchant_id, is_exist } = req.query;
 
         const queryCondition = merchant_id ? { where: { merchant_id } } : {};
 
-        const merchantProductList = await MerchantProduct.findAll({...queryCondition,
+        const merchantProductList = await MerchantProduct.findAll({
+            ...queryCondition,
             include: [{
                 model: Product,
                 as: 'products',
             },
-        ]
+            ]
         });
+
+        if(is_exist == "true"){ 
+           
+            const data = merchantProductList.map((item) => item.product_id)
+
+            console.log(data);
+
+          
+
+    
+            // if (merchantProductList.length === 0) {
+                return res.status(404).json({
+                    status: false,
+                    message: "No merchant products found for the given criteria.",
+                    data: isExistMerchantProductList
+                });
+            // }
+        }
+
 
         if (merchantProductList.length === 0) {
             return res.status(404).json({
@@ -175,11 +195,11 @@ const deleteMerchantProduct = async (req, res) => {
                 message: "Merchant Product ID is required."
             });
         }
-        
+
         const MerchantSubProductData = await MerchantSubProduct.findAll({ where: { merchant_product_id: merchant_product_id } });
- 
+
         await Promise.all(MerchantSubProductData.map(item => SubProductUnit.destroy({ where: { sub_product_id: item.id } })));
- 
+
         await MerchantSubProduct.destroy({ where: { merchant_product_id: merchant_product_id } });
 
         const deletedRows = await MerchantProduct.destroy({ where: { id: merchant_product_id } });
@@ -206,11 +226,107 @@ const deleteMerchantProduct = async (req, res) => {
     }
 };
 
+const duplicateMerchant = async (req, res) => {
+    try {
+        let { merchant_product_id, product_id } = req.query;
+   
+        if (!merchant_product_id || !product_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Merchant Product ID and Product ID are required."
+            });
+        }
+
+        const merchantProduct = await MerchantProduct.findByPk(merchant_product_id);
+        
+        if (!merchantProduct) {
+            return res.status(404).json({
+                status: false,
+                message: "Merchant Product not found."
+            });
+        }
+
+        const newMerchantProduct = await MerchantProduct.create({
+            merchant_id: merchantProduct.merchant_id,
+            product_id
+        });
+
+        if (!newMerchantProduct) {
+            return res.status(500).json({
+                status: false,
+                message: "Failed to create new Merchant Product."
+            });
+        }
+
+        const merchantSubProducts = await MerchantSubProduct.findAll({ where: { merchant_product_id } });
+
+        if (merchantSubProducts.length === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "No Merchant Sub Products found for the given Merchant Product ID."
+            });
+        }
+
+        await Promise.all(
+            merchantSubProducts.map(async (subProduct) => {
+                const units = await SubProductUnit.findAll({ where: { sub_product_id: subProduct.id } });
+                const unitIds = units.map(unit => unit.unit_id);
+
+                const existingSubProduct = await MerchantSubProduct.findOne({
+                    where: {
+                        merchant_id: merchantProduct.merchant_id,
+                        merchant_product_id: newMerchantProduct.id,
+                        name: subProduct.name,
+                        is_active: true
+                    }
+                });
+
+                if (existingSubProduct) {
+                    throw new Error(`Duplicate Sub Product: ${subProduct.name} already exists.`);
+                }
+
+                const newSubProduct = await MerchantSubProduct.create({
+                    merchant_id: merchantProduct.merchant_id,
+                    merchant_product_id: newMerchantProduct.id,
+                    name: subProduct.name,
+                    price: subProduct.price
+                });
+
+                if (!newSubProduct) {
+                    throw new Error(`Failed to create Sub Product: ${subProduct.name}`);
+                }
+
+                await SubProductUnit.bulkCreate(
+                    unitIds.map(unit_id => ({
+                        unit_id,
+                        sub_product_id: newSubProduct.id
+                    }))
+                );
+            })
+        );
+
+        return res.status(200).json({
+            status: true,
+            message: "Merchant Product duplicated successfully."
+        });
+
+    } catch (error) {
+        console.error(error); 
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
+
 
 module.exports = {
     addMerchantProduct,
     getMerchantProductList,
     getMerchantProduct,
     deleteMerchantProduct,
-    updateMerchantProduct
+    updateMerchantProduct,
+    duplicateMerchant
 }
