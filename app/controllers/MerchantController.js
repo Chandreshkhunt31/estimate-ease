@@ -90,7 +90,7 @@ const updateMerchant = async (req, res) => {
 };
 
 
-const getMerchantList = async (req, res) => {
+const getMerchantsList  = async (req, res) => {
     try {
         const merchantList = await Merchant.findAll({
             include: [{
@@ -205,7 +205,7 @@ const deleteMerchant = async (req, res) => {
 
 module.exports = {
     addMerchant,
-    getMerchantList,
+    getMerchantsList,
     getMerchant,
     deleteMerchant,
     updateMerchant

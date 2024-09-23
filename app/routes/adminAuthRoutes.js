@@ -22,7 +22,7 @@ router.put("/business-category/edit", authenticateAdminJWT, businessCategoryCont
 const merchantController = require('../controllers/merchantController')
 router.post('/merchant/add', merchantValidation(), validate, authenticateAdminJWT, merchantController.addMerchant);
 router.put("/merchant/edit", authenticateAdminJWT, merchantController.updateMerchant);
-router.get("/merchant/list", authenticateAdminJWT, merchantController.getMerchantList);
+router.get("/merchant/list", authenticateAdminJWT, merchantController.getMerchantsList);
 router.get("/merchant/get", authenticateAdminJWT, merchantController.getMerchant);
 router.delete("/merchant/delete", authenticateAdminJWT, merchantController.deleteMerchant);
 
