@@ -258,15 +258,7 @@ const duplicateMerchant = async (req, res) => {
             });
         }
 
-        const merchantSubProducts = await MerchantSubProduct.findAll({ where: { merchant_product_id } });
-
-        if (merchantSubProducts.length === 0) {
-            return res.status(404).json({
-                status: false,
-                message: "No Merchant Sub Products found for the given Merchant Product ID."
-            });
-        }
-
+        const merchantSubProducts = await MerchantSubProduct.findAll({ where: { merchant_product_id } }); 
         await Promise.all(
             merchantSubProducts.map(async (subProduct) => {
                 const units = await SubProductUnit.findAll({ where: { sub_product_id: subProduct.id } });
