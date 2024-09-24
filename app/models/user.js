@@ -52,6 +52,12 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   User.associate = function(models) {
+
+    User.hasMany(models.QuotationDetail, {
+      foreignKey: 'created_by',
+      as: 'quotationDetail' 
+    });
+    
     // Define associations here
     User.belongsTo(models.Merchant, {
       foreignKey: 'merchant_id',

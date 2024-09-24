@@ -33,6 +33,8 @@ router.put("/customer/edit", authenticateUserJWT, customerController.updateCusto
 const quotationDetailController = require('../controllers/quotationDetailController')
 
 router.post('/quotation-detail/add', authenticateUserJWT, quotationDetailController.addQuotationDetail);
+router.get("/quotation-detail/get", authenticateUserJWT, quotationDetailController.getQuotationDetail);
+
 
 
 module.exports = router;

@@ -1,4 +1,6 @@
 const QuotationDetail = require('../models').QuotationDetail;
+const User = require('../models').User;
+const Customer = require('../models').Customer;
 
 const addQuotationDetail = async (req, res) => {
     try {
@@ -36,8 +38,49 @@ const addQuotationDetail = async (req, res) => {
         });
     }
 };
+
+const getQuotationDetail = async (req, res) => {
+    try {
+        const { quotation_detail_id } = req.query; 
+
+        const quotationDetail = await QuotationDetail.findByPk(quotation_detail_id, {
+            include: [{
+                model: User,
+                as: 'users',
+                attributes: ['id', 'name', "email", "phone_number"],
+            },
+            {
+                model: Customer,
+                as: 'customers',
+                attributes: ['id', 'name', "address", "contact_no"],
+            }]
+        });
+
+        if (!quotationDetail) {
+            return res.status(404).json({
+                status: false,
+                message: "QuotationDetail not found.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "QuotationDetail retrieved successfully.",
+            data: quotationDetail
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
  
 module.exports = {
-    addQuotationDetail
+    addQuotationDetail,
+    getQuotationDetail
 }
  

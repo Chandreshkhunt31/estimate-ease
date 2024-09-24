@@ -31,7 +31,15 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true,
     paranoid: true
   });
- 
+
+  Customer.associate = function (models) {
+    Customer.hasMany(models.QuotationDetail, {
+      foreignKey: 'customer_id',
+      as: 'QuotationDetail'
+    });
+
+  };
+
   return Customer;
 };
 
