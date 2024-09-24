@@ -4,7 +4,7 @@
  
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('materials', {
+    await queryInterface.createTable('quotation_materials', {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
@@ -26,22 +26,14 @@ module.exports = {
         type: Sequelize.DECIMAL(10, 2), 
         allowNull: false,
       }, 
-      quot_item_id: {
+      quote_item_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'quotation_items',  
           key: 'id',
         } 
-      }, 
-      customer_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'customers',  
-          key: 'id',
-        } 
-      },
+      },  
       created_at: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
@@ -55,15 +47,8 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('materials');
+    await queryInterface.dropTable('quotation_materials');
   },
 };
 
-
-// quotation_number: A unique identifier for the customer's quotation.
-
-// representative_name: The name of the merchant’s representative handling the customer.
-
-// date: The date when the quotation was created.
-
-// merchant_user_id: The ID of the associated merchant.
+ 
