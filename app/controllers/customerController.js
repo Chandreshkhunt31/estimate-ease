@@ -93,10 +93,40 @@ const getCustomer = async (req, res) => {
     }
 };
 
+const deleteCustomer = async (req, res) => {
+    try {
+        const { customer_id } = req.query;
+
+        const deletedRows = await Customer.destroy({ where: { id: customer_id } });
+
+        if (deletedRows === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "This Customer does not exist. Please check the Customer ID.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Customer deleted successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
  
 module.exports = {
     addCustomer,
     getCustomerList,
-    getCustomer
+    getCustomer,
+    deleteCustomer
 }
  
