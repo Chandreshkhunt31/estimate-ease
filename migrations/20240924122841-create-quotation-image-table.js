@@ -10,7 +10,7 @@ module.exports = {
         autoIncrement: true,
         primaryKey: true,
       },
-      quot_item_id: {
+      quote_item_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
