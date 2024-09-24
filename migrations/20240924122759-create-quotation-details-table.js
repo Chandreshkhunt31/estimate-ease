@@ -9,19 +9,15 @@ module.exports = {
         autoIncrement: true,
         primaryKey: true,
       }, 
-      quot_number: {
+      quote_number: {
         type: Sequelize.STRING,
         unique: true,
         allowNull: false,
       },
-      quot_by: {
+      quote_by: {
         type: Sequelize.STRING,
         allowNull: false,
-      },
-      date: {
-        type: Sequelize.DATE,
-        allowNull: false,
-      },
+      }, 
       created_by: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -34,7 +30,7 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'quotation_details', 
+          model: 'customers', 
           key: 'id',
         }, 
       },
