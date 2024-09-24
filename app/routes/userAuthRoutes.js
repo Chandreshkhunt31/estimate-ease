@@ -21,4 +21,9 @@ router.get("/merchant-sub-product/list", authenticateUserJWT, merchantSubProduct
 router.get("/merchant-sub-product/get", authenticateUserJWT, merchantSubProductController.getMerchantSubProduct);
 router.delete("/merchant-sub-product/delete", authenticateUserJWT, merchantSubProductController.deleteMerchantSubProduct);
 
+const customerController = require('../controllers/customerController')
+
+router.post('/customer/add', authenticateUserJWT, customerController.addCustomer);
+ 
+
 module.exports = router;
