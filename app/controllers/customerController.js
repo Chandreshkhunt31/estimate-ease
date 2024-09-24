@@ -122,11 +122,51 @@ const deleteCustomer = async (req, res) => {
     }
 };
 
+
+const updateCustomer = async (req, res) => {
+    try {
+        const { customer_id } = req.query;
+        const body = req.body;
+
+        const existingCustomer = await Customer.findByPk(customer_id);
+        if (!existingCustomer) {
+            return res.status(404).json({
+                status: false,
+                message: "This Customer does not exist. Please check Customer ID.",
+                data: {}
+            });
+        }
+
+        const [affectedRows] = await Customer.update(body, { where: { id: customer_id } });
+        if (affectedRows === 0) {
+            return res.status(400).json({
+                status: false,
+                message: "No changes were made to the Customer data. Please check the provided information.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Customer updated successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
  
 module.exports = {
     addCustomer,
     getCustomerList,
     getCustomer,
-    deleteCustomer
+    deleteCustomer,
+    updateCustomer
 }
  

@@ -27,5 +27,6 @@ router.post('/customer/add', authenticateUserJWT, customerController.addCustomer
 router.get("/customer/list", authenticateUserJWT, customerController.getCustomerList);
 router.get("/customer/get", authenticateUserJWT, customerController.getCustomer);
 router.delete("/customer/delete", authenticateUserJWT, customerController.deleteCustomer);
+router.put("/customer/edit", authenticateUserJWT, customerController.updateCustomer);
 
 module.exports = router;
