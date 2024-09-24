@@ -15,11 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     quote_by: {
       type: DataTypes.STRING,
       allowNull: false
-    },
-    date: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
+    }, 
     created_by: {
       type: DataTypes.INTEGER,
       allowNull: false,
