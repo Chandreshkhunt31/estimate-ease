@@ -79,8 +79,47 @@ const getQuotationDetail = async (req, res) => {
     }
 };
  
+const getQuotationDetailList = async (req, res) => {
+    try {
+        const quotationDetails = await QuotationDetail.findAll( {
+            include: [{
+                model: User,
+                as: 'users',
+                attributes: ['id', 'name', "email", "phone_number"],
+            },
+            {
+                model: Customer,
+                as: 'customers',
+                attributes: ['id', 'name', "address", "contact_no"],
+            }]
+        });
+
+        if (quotationDetails.length === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "No quotationDetails found.",
+                data: []
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "QuotationDetail list retrieved successfully.",
+            data: quotationDetails
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+ 
 module.exports = {
     addQuotationDetail,
-    getQuotationDetail
+    getQuotationDetail,
+    getQuotationDetailList
 }
  
