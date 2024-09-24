@@ -36,5 +36,6 @@ router.post('/quotation-detail/add', authenticateUserJWT, quotationDetailControl
 router.get("/quotation-detail/get", authenticateUserJWT, quotationDetailController.getQuotationDetail);
 router.get("/quotation-detail/list", authenticateUserJWT, quotationDetailController.getQuotationDetailList);
 router.put("/quotation-detail/edit", authenticateUserJWT, quotationDetailController.updateQuotationDetail);
+router.delete("/quotation-detail/delete", authenticateUserJWT, quotationDetailController.deleteQuotationDetail);
 
 module.exports = router;

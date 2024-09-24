@@ -41,7 +41,7 @@ const addQuotationDetail = async (req, res) => {
 
 const getQuotationDetail = async (req, res) => {
     try {
-        const { quotation_detail_id } = req.query; 
+        const { quotation_detail_id } = req.query;
 
         const quotationDetail = await QuotationDetail.findByPk(quotation_detail_id, {
             include: [{
@@ -78,10 +78,10 @@ const getQuotationDetail = async (req, res) => {
         });
     }
 };
- 
+
 const getQuotationDetailList = async (req, res) => {
     try {
-        const quotationDetails = await QuotationDetail.findAll( {
+        const quotationDetails = await QuotationDetail.findAll({
             include: [{
                 model: User,
                 as: 'users',
@@ -155,11 +155,39 @@ const updateQuotationDetail = async (req, res) => {
     }
 };
 
- 
+const deleteQuotationDetail = async (req, res) => {
+    try {
+        const { quotation_detail_id } = req.query;
+
+        const deletedRows = await QuotationDetail.destroy({ where: { id: quotation_detail_id } });
+
+        if (deletedRows === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "This QuotationDetail does not exist. Please check the QuotationDetail ID.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "QuotationDetail deleted successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     addQuotationDetail,
     getQuotationDetail,
     getQuotationDetailList,
-    updateQuotationDetail
+    updateQuotationDetail,
+    deleteQuotationDetail
 }
- 
