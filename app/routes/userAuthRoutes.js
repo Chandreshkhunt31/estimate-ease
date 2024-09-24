@@ -30,4 +30,9 @@ router.get("/customer/get", authenticateUserJWT, customerController.getCustomer)
 router.delete("/customer/delete", authenticateUserJWT, customerController.deleteCustomer);
 router.put("/customer/edit", authenticateUserJWT, customerController.updateCustomer);
 
+const quotationDetailController = require('../controllers/quotationDetailController')
+
+router.post('/quotation-detail/add', authenticateUserJWT, quotationDetailController.addQuotationDetail);
+
+
 module.exports = router;
