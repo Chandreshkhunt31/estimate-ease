@@ -64,10 +64,39 @@ const getCustomerList = async (req, res) => {
         });
     }
 };
+const getCustomer = async (req, res) => {
+    try {
+        const { customer_id } = req.query;
+
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            return res.status(404).json({
+                status: false,
+                message: "Customer not found.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Customer retrieved successfully.",
+            data: customer
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
 
  
 module.exports = {
     addCustomer,
-    getCustomerList
+    getCustomerList,
+    getCustomer
 }
  
