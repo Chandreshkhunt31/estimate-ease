@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
-const Admin = require('../models').Admin;
+const User = require('../models').User;
 
-const authenticateAdminJWT = (req, res, next) => {
+const authenticateUserJWT = (req, res, next) => {
 
   const token = req.headers.authorization;
 
@@ -20,9 +20,9 @@ const authenticateAdminJWT = (req, res, next) => {
       req.id = user.id;
       req.email = user.email;
 
-      const admin = await Admin.findOne({ where: { id: user.id, email: user.email, } });
+      const userData = await User.findOne({ where: { id: user.id, email: user.email, } });
 
-      if (admin) {
+      if (userData) {
         return next();
       }
 
@@ -44,5 +44,4 @@ const authenticateAdminJWT = (req, res, next) => {
   }
 };
 
-
-module.exports = { authenticateAdminJWT };
+module.exports = { authenticateUserJWT };

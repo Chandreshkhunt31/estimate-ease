@@ -17,5 +17,17 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true
   });
 
+  BusinessCategory.associate = function(models) {
+    // A BusinessCategory has many Merchants
+    BusinessCategory.hasMany(models.Merchant, {
+      foreignKey: 'business_category_id',
+      as: 'merchants' // alias for the association
+    });
+    BusinessCategory.hasMany(models.Product, {
+      foreignKey: 'business_category_id',
+      as: 'products' // alias for the association
+    });
+  };
+
   return BusinessCategory;
 };

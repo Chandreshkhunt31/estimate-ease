@@ -1,15 +1,20 @@
 const express = require("express");
 require('dotenv').config();
-var routes = require("./app/routes"); 
-
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+require('./app/config/db')
 
+app.use(cors());
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+var routes = require("./app/routes");
 app.use('/', routes);
 
 app.listen(PORT, function (err) {
   if (err) console.log(err);
-  console.log("Server listening on PORT", PORT);
+  console.log("Server listening on PORT http://localhost/" + PORT);
 });

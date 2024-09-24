@@ -1,25 +1,25 @@
 'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-  const UserSubProduct = sequelize.define('UserSubProduct', {
+  const MerchantSubProduct = sequelize.define('MerchantSubProduct', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true
     },
-    user_product_id: {
+    merchant_product_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'users_products',
+        model: 'merchantProducts',
         key: 'id'
       }
     },
-    user_id: {
+    merchant_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'users',
+        model: 'merchants',
         key: 'id'
       }
     },
@@ -40,7 +40,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     }
   }, {
-    tableName: 'user_sub_products',
+    tableName: 'merchant_sub_products',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at',
@@ -48,18 +48,21 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true
   });
 
-  UserSubProduct.associate = function(models) {
-   
-    UserSubProduct.belongsTo(models.UsersProduct, {
-      foreignKey: 'user_product_id',
-      as: 'userProduct'
+  MerchantSubProduct.associate = function (models) {
+    // MerchantSubProduct model
+    MerchantSubProduct.hasMany(models.SubProductUnit, { as: 'SubProductUnits', foreignKey: 'sub_product_id' });
+
+
+    MerchantSubProduct.belongsTo(models.MerchantProduct, {
+      foreignKey: 'merchant_product_id',
+      as: 'merchantProducts'
     });
 
-    UserSubProduct.belongsTo(models.User, {
-      foreignKey: 'user_id',
-      as: 'user'
+    MerchantSubProduct.belongsTo(models.Merchant, {
+      foreignKey: 'merchant_id',
+      as: 'merchants'
     });
   };
 
-  return UserSubProduct;
+  return MerchantSubProduct;
 };

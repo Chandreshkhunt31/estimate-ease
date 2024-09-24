@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'business_categories',
+        model: 'businessCategories',
         key: 'id'
       }
     },
@@ -57,7 +57,7 @@ module.exports = (sequelize, DataTypes) => {
 
     Merchant.hasMany(models.User, {
         foreignKey: 'merchant_id',
-        as: 'users',
+        as: 'merchants',
       });
   };
 

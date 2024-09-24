@@ -1,17 +1,17 @@
 'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-  const UsersProduct = sequelize.define('UsersProduct', {
+  const MerchantProduct = sequelize.define('MerchantProduct', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true
     },
-    user_id: {
+    merchant_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'users',
+        model: 'merchants',
         key: 'id'
       }
     },
@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     }
   }, {
-    tableName: 'users_products',
+    tableName: 'merchant_products',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at',
@@ -41,18 +41,18 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true
   });
 
-  UsersProduct.associate = function(models) {
+  MerchantProduct.associate = function(models) {
 
-    UsersProduct.belongsTo(models.User, {
-      foreignKey: 'user_id',
-      as: 'user'
+    MerchantProduct.belongsTo(models.Merchant, {
+      foreignKey: 'merchant_id',
+      as: 'merchants'
     });
 
-    UsersProduct.belongsTo(models.Product, {
+    MerchantProduct.belongsTo(models.Product, {
       foreignKey: 'product_id',
-      as: 'product'
+      as: 'products'
     });
   };
 
-  return UsersProduct;
+  return MerchantProduct;
 };

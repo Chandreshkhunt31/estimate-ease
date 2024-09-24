@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true
     },
-    merchants_id: {
+    merchant_id: {
       type: DataTypes.INTEGER,
       references: {
         model: 'merchants',
@@ -54,7 +54,7 @@ module.exports = (sequelize, DataTypes) => {
   User.associate = function(models) {
     // Define associations here
     User.belongsTo(models.Merchant, {
-      foreignKey: 'merchants_id',
+      foreignKey: 'merchant_id',
       as: 'merchant'
     });
   };
