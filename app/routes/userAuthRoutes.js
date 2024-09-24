@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { userSignupValidationRules, loginValidationRules, validate } = require('../validators/userValidator');
+const { customerValidation } = require('../validators/customerValidator');
 const { authenticateUserJWT } = require('../middlewares/authenticateUserJWT')
 
 const userAuthController = require('../controllers/userAuthController');
@@ -23,7 +24,7 @@ router.delete("/merchant-sub-product/delete", authenticateUserJWT, merchantSubPr
 
 const customerController = require('../controllers/customerController')
 
-router.post('/customer/add', authenticateUserJWT, customerController.addCustomer);
+router.post('/customer/add',  customerValidation(), validate, authenticateUserJWT, customerController.addCustomer);
 router.get("/customer/list", authenticateUserJWT, customerController.getCustomerList);
 router.get("/customer/get", authenticateUserJWT, customerController.getCustomer);
 router.delete("/customer/delete", authenticateUserJWT, customerController.deleteCustomer);
