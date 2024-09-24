@@ -37,9 +37,37 @@ const addCustomer = async (req, res) => {
         });
     }
 };
+
+const getCustomerList = async (req, res) => {
+    try {
+        const customers = await Customer.findAll();
+
+        if (customers.length === 0) {
+            return res.status(404).json({
+                status: false,
+                message: "No customers found.",
+                data: []
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Customer list retrieved successfully.",
+            data: customers
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
  
 module.exports = {
     addCustomer,
-    
+    getCustomerList
 }
  
