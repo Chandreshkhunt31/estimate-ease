@@ -26,15 +26,7 @@ module.exports = (sequelize, DataTypes) => {
         model: 'Product',
         key: 'id'
       }
-    },
-    customer_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Customer',
-        key: 'id'
-      }
-    },
+    }, 
     deleted_at: {
       type: DataTypes.DATE,
       allowNull: true
@@ -58,12 +50,7 @@ module.exports = (sequelize, DataTypes) => {
     QuotationItem.belongsTo(models.Product, {
       foreignKey: 'product_id',
       as: 'products'
-    });
-
-    QuotationItem.belongsTo(models.Customer, {
-      foreignKey: 'customer_id',
-      as: 'customers'
-    });
+    }); 
   };
 
   return QuotationItem;
