@@ -116,10 +116,50 @@ const getQuotationDetailList = async (req, res) => {
         });
     }
 };
+
+const updateQuotationDetail = async (req, res) => {
+    try {
+        const { quotation_detail_id } = req.query;
+        const body = req.body;
+
+        const existingQuotationDetail = await QuotationDetail.findByPk(quotation_detail_id);
+        if (!existingQuotationDetail) {
+            return res.status(404).json({
+                status: false,
+                message: "This QuotationDetail does not exist. Please check QuotationDetail ID.",
+                data: {}
+            });
+        }
+
+        const [affectedRows] = await QuotationDetail.update(body, { where: { id: quotation_detail_id } });
+        if (affectedRows === 0) {
+            return res.status(400).json({
+                status: false,
+                message: "No changes were made to the QuotationDetail data. Please check the provided information.",
+                data: {}
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "QuotationDetail updated successfully.",
+            data: {}
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
  
 module.exports = {
     addQuotationDetail,
     getQuotationDetail,
-    getQuotationDetailList
+    getQuotationDetailList,
+    updateQuotationDetail
 }
  
