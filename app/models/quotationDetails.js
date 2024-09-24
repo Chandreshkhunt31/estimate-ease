@@ -7,12 +7,12 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true
     },
-    quot_number: {
+    quote_number: {
       type: DataTypes.STRING,
       unique: true,
       allowNull: false
     },
-    quot_by: {
+    quote_by: {
       type: DataTypes.STRING,
       allowNull: false
     },

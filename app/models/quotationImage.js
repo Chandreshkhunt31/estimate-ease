@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true
     },
-    quot_item_id: {
+    quote_item_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -30,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
   QuotationImage.associate = function (models) {
 
     QuotationImage.belongsTo(models.QuotationItem, {
-      foreignKey: 'quot_item_id',
+      foreignKey: 'quote_item_id',
       as: 'quotation_items'
     });
   };

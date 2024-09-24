@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false
     },
-    quot_item_id: {
+    quote_item_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -49,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Material.associate = function (models) {
     Material.belongsTo(models.QuotationItem, {
-      foreignKey: 'quot_item_id',
+      foreignKey: 'quote_item_id',
       as: 'quotation_items'
     });
 
