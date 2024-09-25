@@ -4,9 +4,9 @@ const Customer = require('../models').Customer;
 
 const addQuotationDetail = async (req, res) => {
     try {
-        const { quot_number, quot_by, date, created_by, customer_id } = req.body;
+        const { quote_number, quote_by, date, created_by, customer_id } = req.body;
 
-        const existingQuotationDetail = await QuotationDetail.findOne({ where: { quot_number, quot_by, customer_id } });
+        const existingQuotationDetail = await QuotationDetail.findOne({ where: { quote_number, quote_by, customer_id } });
         if (existingQuotationDetail) {
             return res.status(409).json({
                 status: false,
@@ -15,7 +15,7 @@ const addQuotationDetail = async (req, res) => {
             });
         }
 
-        const newQuotationDetail = await QuotationDetail.create({ quot_number, quot_by, date, created_by, customer_id });
+        const newQuotationDetail = await QuotationDetail.create({ quote_number, quote_by, date, created_by, customer_id });
         if (!newQuotationDetail) {
             return res.status(400).json({
                 status: false,
