@@ -7,6 +7,14 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true
     },
+    customer_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'customers',
+        key: 'id'
+      }
+    },
     quote_number: {
       type: DataTypes.STRING,
       unique: true,
@@ -15,20 +23,12 @@ module.exports = (sequelize, DataTypes) => {
     quote_by: {
       type: DataTypes.STRING,
       allowNull: false
-    }, 
+    },
     created_by: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: 'users',
-        key: 'id'
-      }
-    },
-    customer_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'customers',
         key: 'id'
       }
     },

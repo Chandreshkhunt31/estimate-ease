@@ -8,7 +8,15 @@ module.exports = {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true,
-      }, 
+      },
+      customer_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'customers',
+          key: 'id',
+        },
+      },
       quote_number: {
         type: Sequelize.STRING,
         unique: true,
@@ -17,23 +25,16 @@ module.exports = {
       quote_by: {
         type: Sequelize.STRING,
         allowNull: false,
-      }, 
+      },
       created_by: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'users', 
+          model: 'users',
           key: 'id',
-        }, 
+        },
       },
-      customer_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'customers', 
-          key: 'id',
-        }, 
-      },
+
       deleted_at: {
         type: Sequelize.DATE,
         allowNull: true,
