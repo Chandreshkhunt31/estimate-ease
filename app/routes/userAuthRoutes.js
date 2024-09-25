@@ -22,4 +22,8 @@ router.get("/merchant-sub-product/list", authenticateUserJWT, merchantSubProduct
 router.get("/merchant-sub-product/get", authenticateUserJWT, merchantSubProductController.getMerchantSubProduct);
 router.delete("/merchant-sub-product/delete", authenticateUserJWT, merchantSubProductController.deleteMerchantSubProduct);
 
+const estimateController = require('../controllers/estimationController')
+
+router.post('/estimate/add', authenticateUserJWT, estimateController.addEstimate);
+
 module.exports = router;
