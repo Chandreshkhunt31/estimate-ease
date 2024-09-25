@@ -1,5 +1,6 @@
 const Customer = require('../models').Customer;
 const QuotationDetail = require('../models').QuotationDetail;
+const QuotationItem = require('../models').QuotationItem;
 
  
 function getRandomNumber(min, max) {
@@ -8,7 +9,7 @@ function getRandomNumber(min, max) {
 
 const createEstimate = async (body) => {
     try { 
-        let { name, address, contact_no, quote_by, created_by, quote_number } = body
+        let { name, address, contact_no, quote_by, created_by, quote_number, quotationItems } = body
 
         const customerData = { name, address, contact_no }
         const newCustomer = await addCustomer(customerData) 
@@ -22,6 +23,7 @@ const createEstimate = async (body) => {
         }
 
         const customer_id = newCustomer.data.id 
+        
         quote_number = quote_number ? quote_number : getRandomNumber(1, 1000); 
     
         const quotationDetailData = { quote_number, quote_by, created_by, customer_id }
@@ -34,8 +36,25 @@ const createEstimate = async (body) => {
             });
         }
 
-         
-        const finalData = newCustomer.data
+        quotationItems.map(async (item) => { 
+            const quotationItemData = { 
+                quote_id : newQuotationDetail.data.id, 
+                item_name : item.item_name, 
+                product_id : item.product_id
+            }  
+            
+            const newQuotationItem = await addQuotationItem(quotationItemData);
+            if (!newQuotationItem.status) {
+                return ({
+                    status: false,
+                    message: newQuotationItem.message,
+                    data: {}
+                });
+            }
+            
+        })
+ 
+        const finalData = newQuotationDetail.data
          
         return ({
             status: true,
@@ -148,6 +167,57 @@ const addQuotationDetail = async (quotationDetailData) => {
         });
     }
 };
+
+const addQuotationItem = async (quotationItemData) => {
+    try {
+        const { quote_id, item_name, product_id } = quotationItemData;  
+        
+        const name = item_name
+        const existingQuotationItem = await QuotationItem.findOne({ where: { name } });
+        if (existingQuotationItem != null) {
+
+            const updateData = { quote_id, name, product_id }
+            const [affectedRows] = await QuotationItem.update(updateData, { where: { id: existingQuotationItem.id } });
+            if (affectedRows === 0) {
+                return  ({
+                    status: false,
+                    message: "No changes were made to the QuotationItem data. Please check the provided information.",
+                    data: {}
+                });
+            }
+            const quotationItem = await QuotationItem.findOne({ where: { name } });
+
+            return  ({
+                status: true,
+                message: "QuotationItem updated successfully.",
+                data: quotationItem
+            });
+        }
+
+        const newQuotationItem = await QuotationItem.create({ quote_id, name, product_id });
+        if (!newQuotationItem) {
+            return  ({
+                status: false,
+                message: "Something went wrong while inserting QuotationItem data.",
+                data: {}
+            });
+        }
+
+        return ({
+            status: true,
+            message: "QuotationItem added successfully.",
+            data: newQuotationItem
+        });
+    } catch (error) {
+        console.error(error);
+        return ({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+ 
 
 module.exports = { 
     createEstimate
