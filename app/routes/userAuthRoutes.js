@@ -22,20 +22,4 @@ router.get("/merchant-sub-product/list", authenticateUserJWT, merchantSubProduct
 router.get("/merchant-sub-product/get", authenticateUserJWT, merchantSubProductController.getMerchantSubProduct);
 router.delete("/merchant-sub-product/delete", authenticateUserJWT, merchantSubProductController.deleteMerchantSubProduct);
 
-const customerController = require('../controllers/customerController')
-
-router.post('/customer/add',  customerValidation(), validate, authenticateUserJWT, customerController.addCustomer);
-router.get("/customer/list", authenticateUserJWT, customerController.getCustomerList);
-router.get("/customer/get", authenticateUserJWT, customerController.getCustomer);
-router.delete("/customer/delete", authenticateUserJWT, customerController.deleteCustomer);
-router.put("/customer/edit", authenticateUserJWT, customerController.updateCustomer);
-
-const quotationDetailController = require('../controllers/quotationDetailController')
-
-router.post('/quotation-detail/add', authenticateUserJWT, quotationDetailController.addQuotationDetail);
-router.get("/quotation-detail/get", authenticateUserJWT, quotationDetailController.getQuotationDetail);
-router.get("/quotation-detail/list", authenticateUserJWT, quotationDetailController.getQuotationDetailList);
-router.put("/quotation-detail/edit", authenticateUserJWT, quotationDetailController.updateQuotationDetail);
-router.delete("/quotation-detail/delete", authenticateUserJWT, quotationDetailController.deleteQuotationDetail);
-
 module.exports = router;

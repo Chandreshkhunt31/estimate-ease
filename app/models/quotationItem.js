@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'QuotationDetail',
+        model: 'quotationDetails',
         key: 'id'
       }
     },
@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'Product',
+        model: 'products',
         key: 'id'
       }
     }, 
@@ -41,6 +41,15 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   QuotationItem.associate = function (models) {
+    QuotationItem.hasMany(models.QuotationImage, {
+      foreignKey: 'quote_item_id',
+      as: 'quotationImages' 
+    });
+    
+    QuotationItem.hasMany(models.QuotationMaterial, {
+      foreignKey: 'quote_item_id',
+      as: 'quotationMaterials' 
+    });
 
     QuotationItem.belongsTo(models.QuotationDetail, {
       foreignKey: 'quote_id',

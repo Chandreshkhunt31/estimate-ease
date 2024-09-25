@@ -47,6 +47,11 @@ module.exports = (sequelize, DataTypes) => {
 
   QuotationDetail.associate = function (models) {
 
+    QuotationDetail.hasMany(models.QuotationItem, {
+      foreignKey: 'quote_id',
+      as: 'quotationItems' 
+    });
+
     QuotationDetail.belongsTo(models.User, {
       foreignKey: 'created_by',
       as: 'users'
