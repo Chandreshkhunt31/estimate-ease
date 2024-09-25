@@ -9,10 +9,6 @@ module.exports = {
         primaryKey: true,
         allowNull: false
       },
-      name: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
       quot_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -20,6 +16,10 @@ module.exports = {
           model: 'quotation_details', 
           key: 'id'
         } 
+      },
+      name: {
+        type: Sequelize.STRING,
+        allowNull: false
       },
       product_id: {
         type: Sequelize.INTEGER,

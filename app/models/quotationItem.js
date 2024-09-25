@@ -7,10 +7,6 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true
     },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
     quote_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -18,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
         model: 'QuotationDetail',
         key: 'id'
       }
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false
     },
     product_id: {
       type: DataTypes.INTEGER,
