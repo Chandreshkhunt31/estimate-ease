@@ -1,7 +1,7 @@
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
- 
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('quotation_materials', {
@@ -9,7 +9,15 @@ module.exports = {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true,
-      }, 
+      },
+      quote_item_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'quotation_items',
+          key: 'id',
+        }
+      },
       unit_of_measure: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -19,17 +27,9 @@ module.exports = {
         allowNull: false,
       },
       price: {
-        type: Sequelize.DECIMAL(10, 2), 
+        type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
-      }, 
-      quote_item_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'quotation_items',  
-          key: 'id',
-        } 
-      },  
+      },
       created_at: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
@@ -47,4 +47,3 @@ module.exports = {
   },
 };
 
- 

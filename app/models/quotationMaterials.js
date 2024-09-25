@@ -7,6 +7,14 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true
     },
+    quote_item_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'QuotationItem',
+        key: 'id'
+      }
+    },
     unit_of_measure: {
       type: DataTypes.STRING,
       allowNull: false
@@ -19,14 +27,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false
     },
-    quote_item_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'QuotationItem',
-        key: 'id'
-      }
-    } 
   }, {
     tableName: 'quotation_materials',
     timestamps: true,
@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
     Material.belongsTo(models.QuotationItem, {
       foreignKey: 'quote_item_id',
       as: 'quotation_items'
-    }); 
+    });
   };
 
   return Material;
