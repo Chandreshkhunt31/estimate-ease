@@ -33,6 +33,12 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Product.associate = function (models) {
+
+    Product.hasMany(models.QuotationItem, {
+      foreignKey: 'product_id',
+      as: 'quotationItems' 
+    });
+
     Product.belongsTo(models.BusinessCategory, {
       foreignKey: 'business_category_id',
       as: 'businessCategory'

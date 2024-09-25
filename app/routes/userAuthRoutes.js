@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { userSignupValidationRules, loginValidationRules, validate } = require('../validators/userValidator');
+const { customerValidation } = require('../validators/customerValidator');
 const { authenticateUserJWT } = require('../middlewares/authenticateUserJWT')
 
 const userAuthController = require('../controllers/userAuthController');
