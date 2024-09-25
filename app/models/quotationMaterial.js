@@ -15,6 +15,14 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
+    material_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'merchant_sub_products',
+        key: 'id'
+      }
+    },
     unit_of_measure: {
       type: DataTypes.STRING,
       allowNull: false
