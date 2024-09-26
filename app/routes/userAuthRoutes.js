@@ -13,6 +13,11 @@ const userController = require('../controllers/userController')
  
 router.get("/user/get", authenticateUserJWT, userController.getUser);
 
+
+const merchantProductController = require('../controllers/merchantProductController')
+
+router.get("/merchant-product/list", authenticateUserJWT, merchantProductController.getMerchantProductList); 
+
 const estimateController = require('../controllers/estimationController')
 
 router.post('/estimate/add', authenticateUserJWT, estimateController.addEstimate);
