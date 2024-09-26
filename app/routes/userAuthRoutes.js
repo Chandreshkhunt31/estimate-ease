@@ -9,7 +9,9 @@ const userAuthController = require('../controllers/userAuthController');
 router.post('/signup', userSignupValidationRules(), validate, userAuthController.signup);
 router.post('/login', loginValidationRules(), validate, userAuthController.login);
 
+const userController = require('../controllers/userController')
  
+router.get("/user/get", authenticateUserJWT, userController.getUser);
 
 const estimateController = require('../controllers/estimationController')
 
