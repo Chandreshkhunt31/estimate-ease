@@ -2,12 +2,12 @@ const Estimate = require("../services/estimateService")
 
 const addEstimate = async (req, res) => {
     try {
-        let body = req.body 
+        let body = req.body
         const user_id = req.id
- 
+
         body.created_by = user_id
- 
-        const newEstimate = await Estimate.createEstimate(body) 
+
+        const newEstimate = await Estimate.createEstimate(body)
         if (!newEstimate.status) {
             return res.status(400).json({
                 status: false,
@@ -32,6 +32,6 @@ const addEstimate = async (req, res) => {
 };
 
 
-module.exports ={
-    addEstimate 
+module.exports = {
+    addEstimate
 }
