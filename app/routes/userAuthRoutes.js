@@ -18,6 +18,10 @@ const merchantProductController = require('../controllers/merchantProductControl
 
 router.get("/merchant-product/list", authenticateUserJWT, merchantProductController.getMerchantProductList); 
 
+const merchantSubProductController = require('../controllers/MerchantSubProductController')
+
+router.get("/merchant-sub-product/list", authenticateUserJWT, merchantSubProductController.getMerchantSubProductList); 
+
 const estimateController = require('../controllers/estimationController')
 
 router.post('/estimate/add', authenticateUserJWT, estimateController.addEstimate);
