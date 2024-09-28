@@ -26,12 +26,13 @@ const addMerchantSubProduct = async (req, res) => {
         }
         const sub_product_id = newSubProduct.id
 
-        unit_id.map(async(item)=>{
-            console.log(item);
-            unit_id = item
-            await SubProductUnit.create({ unit_id, sub_product_id });
-        })
-
+        if (unit_id && unit_id.length > 0) {
+            unit_id.map(async (item) => {
+                console.log(item);
+                unit_id = item;
+                await SubProductUnit.create({ unit_id, sub_product_id });
+            });
+        }
         return res.status(201).json({
             status: true,
             message: "Merchant Sub Product added successfully.",
