@@ -15,6 +15,14 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
+    merchant_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'merchants',
+        key: 'id'
+      }
+    },  
     quote_number: {
       type: DataTypes.STRING,
       unique: true,

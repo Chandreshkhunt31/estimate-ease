@@ -23,13 +23,15 @@ const merchantSubProductController = require('../controllers/MerchantSubProductC
 
 router.get("/merchant-sub-product/list", authenticateUserJWT, merchantSubProductController.getMerchantSubProductList); 
 router.post('/merchant-sub-product/add', merchantSubProductValidation(), validate, authenticateUserJWT, merchantSubProductController.addMerchantSubProduct);
-
-
+ 
 const unitController = require('../controllers/unitController')
  
 router.get("/unit/list", authenticateUserJWT, unitController.getUnitList);
+
 const estimateController = require('../controllers/estimationController')
 
 router.post('/estimate/add', authenticateUserJWT, estimateController.addEstimate);
+router.get('/estimate/get',   estimateController.getEstimate);
 
 module.exports = router;
+    
