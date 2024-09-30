@@ -1,3 +1,5 @@
+const { where } = require('sequelize');
+
 const MerchantSubProduct = require('../models').MerchantSubProduct;
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
@@ -24,19 +26,41 @@ const addMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
-        const sub_product_id = newSubProduct.id
+        let merchantSubProductsUnit = [];
+        const sub_product_id = newSubProduct.id;
 
         if (unit_id && unit_id.length > 0) {
-            unit_id.map(async (item) => {
+            for (const item of unit_id) {
                 console.log(item);
-                unit_id = item;
-                await SubProductUnit.create({ unit_id, sub_product_id });
-            });
-        }
+                let unitData = await SubProductUnit.create({ unit_id: item, sub_product_id });
+                if (unitData) {
+                    const queryCondition = { where: { id: unitData.id } }
+                    const subProductUnitData = await SubProductUnit.findOne({
+                        ...queryCondition, include: [{
+                            model: Unit,
+                            as: 'units',
+                        },
+                        ]
+                    });
+                    console.log(subProductUnitData);
+                    
+                    const data = {
+                        "id": unitData.id,
+                        "unit_id": unitData.unit_id,
+                        "sub_product_id": unitData.sub_product_id,
+                        "units": subProductUnitData.units
+                    }
+                    merchantSubProductsUnit.push(data);
+                }
+            }
+        } 
+        newSubProduct.SubProductUnits = merchantSubProductsUnit
+      
         return res.status(201).json({
             status: true,
             message: "Merchant Sub Product added successfully.",
-            data: newSubProduct
+            data: newSubProduct,
+            SubProductUnits: merchantSubProductsUnit
         });
     } catch (error) {
         console.error(error);
