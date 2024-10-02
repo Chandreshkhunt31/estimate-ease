@@ -30,8 +30,7 @@ const addMerchantSubProduct = async (req, res) => {
         const sub_product_id = newSubProduct.id;
 
         if (unit_id && unit_id.length > 0) {
-            for (const item of unit_id) {
-                console.log(item);
+            for (const item of unit_id) { 
                 let unitData = await SubProductUnit.create({ unit_id: item, sub_product_id });
                 if (unitData) {
                     const queryCondition = { where: { id: unitData.id } }
@@ -42,8 +41,7 @@ const addMerchantSubProduct = async (req, res) => {
                         },
                         ]
                     });
-                    console.log(subProductUnitData);
-                    
+                  
                     const data = {
                         "id": unitData.id,
                         "unit_id": unitData.unit_id,
@@ -103,8 +101,7 @@ const updateMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
-        const sub_product_id = merchant_sub_product_id
-        console.log(sub_product_id, "sub_product_id");
+        const sub_product_id = merchant_sub_product_id 
         
         const queryCondition = sub_product_id ? { where: { sub_product_id } } : {};
         const units = await SubProductUnit.findAll({

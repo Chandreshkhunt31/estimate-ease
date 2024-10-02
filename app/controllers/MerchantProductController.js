@@ -45,8 +45,7 @@ const addMerchantProduct = async (req, res) => {
 const updateMerchantProduct = async (req, res) => {
     try {
         const { merchant_product_id } = req.query;
-        const updateData = req.body;
-        console.log(updateData);
+        const updateData = req.body; 
 
 
         if (!merchant_product_id) {
@@ -108,12 +107,8 @@ const getMerchantProductList = async (req, res) => {
         if(is_exist == "true"){ 
            
             const data = merchantProductList.map((item) => item.product_id)
-
-            console.log(data);
-
-          
-
-    
+ 
+ 
             // if (merchantProductList.length === 0) {
                 return res.status(404).json({
                     status: false,

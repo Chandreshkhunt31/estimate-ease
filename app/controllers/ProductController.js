@@ -106,7 +106,7 @@ const getProductList = async (req, res) => {
         if(is_exist == "true"){ 
             const merchantProductList = await MerchantProduct.findAll({ where: { merchant_id } }); 
             const data = merchantProductList.map((item) => item.product_id) 
-            console.log(data);
+             
 
             const ExistMerchantQueryCondition = { where: { business_category_id, id: { [Op.notIn]: data } } } 
 

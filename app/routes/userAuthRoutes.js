@@ -31,6 +31,8 @@ router.get("/unit/list", authenticateUserJWT, unitController.getUnitList);
 const estimateController = require('../controllers/estimationController')
 
 router.post('/estimate/add', authenticateUserJWT, estimateController.addEstimate);
+router.put('/estimate/edit',authenticateUserJWT, estimateController.editEstimate); 
+router.delete('/estimate/delete',authenticateUserJWT, estimateController.deleteQuotationItem); 
 router.get('/estimate/get', estimateController.getEstimate);
 router.get('/estimate/customer/list', estimateController.getEstimateCustomerList);
 
