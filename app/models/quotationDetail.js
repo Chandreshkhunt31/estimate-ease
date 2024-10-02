@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
+    sales_rep: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
     created_by: {
       type: DataTypes.INTEGER,
       allowNull: false,

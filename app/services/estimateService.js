@@ -7,7 +7,7 @@ const QuotationMaterial = require('../models').QuotationMaterial;
 const MerchantSubProduct = require('../models').MerchantSubProduct;
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
- 
+
 
 function getRandomNumber(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
@@ -15,8 +15,8 @@ function getRandomNumber(min, max) {
 
 const createEstimate = async (body) => {
     try {
-        let { name, address, contact_no, quote_by, created_by, quote_number, quotationItems, merchant_id } = body
- 
+        let { name, address, contact_no, quote_by, created_by, quote_number, quotationItems, merchant_id, sales_rep } = body
+
 
         const customerData = { name, address, contact_no, merchant_id }
         const newCustomer = await addCustomer(customerData)
@@ -33,7 +33,7 @@ const createEstimate = async (body) => {
 
         quote_number = quote_number ? quote_number : getRandomNumber(1, 1000);
 
-        const quotationDetailData = { quote_number, quote_by, created_by, customer_id, merchant_id }
+        const quotationDetailData = { quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep }
         const newQuotationDetail = await addQuotationDetail(quotationDetailData);
         if (!newQuotationDetail.status) {
             return ({
@@ -42,46 +42,46 @@ const createEstimate = async (body) => {
                 data: {}
             });
         }
- 
+
         quotationItems.map(async (item) => {
-            if(item.total != 0){ 
-            const quotationItemData = {
-                quote_id: newQuotationDetail.data.id,
-                name: item.item_name,
-                item_name: item.name,
-                product_id: item.product_id
-            }
-            
-            const newQuotationItem = await addQuotationItem(quotationItemData);
-            if (!newQuotationItem.status) {
-                return ({
-                    status: false,
-                    message: newQuotationItem.message,
-                    data: {}
-                });
-            }
-            let materialData = item.material
-            materialData.map(async (item) => {
-
-                let quotationMaterialData = {
-                    material_id: item.material_id,
-                    unit_of_measure: item.unit_of_measure,
-                    qty: item.qty,
-                    price: item.price,
-                    quote_item_id: newQuotationItem.data.id
+            if (item.total != 0) {
+                const quotationItemData = {
+                    quote_id: newQuotationDetail.data.id,
+                    name: item.item_name,
+                    item_name: item.name,
+                    product_id: item.product_id
                 }
-                item.id ? (quotationMaterialData.id = item.id) : ''
 
-                const newQuotationMaterial = await addQuotationMaterial(quotationMaterialData);
-                if (!newQuotationMaterial.status) {
+                const newQuotationItem = await addQuotationItem(quotationItemData);
+                if (!newQuotationItem.status) {
                     return ({
                         status: false,
-                        message: newQuotationMaterial.message,
+                        message: newQuotationItem.message,
                         data: {}
                     });
-                } 
-            })
-        } 
+                }
+                let materialData = item.material
+                materialData.map(async (item) => {
+
+                    let quotationMaterialData = {
+                        material_id: item.material_id,
+                        unit_of_measure: item.unit_of_measure,
+                        qty: item.qty,
+                        price: item.price,
+                        quote_item_id: newQuotationItem.data.id
+                    }
+                    item.id ? (quotationMaterialData.id = item.id) : ''
+
+                    const newQuotationMaterial = await addQuotationMaterial(quotationMaterialData);
+                    if (!newQuotationMaterial.status) {
+                        return ({
+                            status: false,
+                            message: newQuotationMaterial.message,
+                            data: {}
+                        });
+                    }
+                })
+            }
         })
 
         const finalData = newQuotationDetail.data
@@ -105,7 +105,7 @@ const createEstimate = async (body) => {
 const addCustomer = async (customerData) => {
     try {
         let { name, address, contact_no, merchant_id } = customerData;
-  
+
         const newCustomer = await Customer.create({ name, address, contact_no, merchant_id });
         if (!newCustomer) {
             return ({
@@ -132,7 +132,7 @@ const addCustomer = async (customerData) => {
 const updateCustomer = async ({ customerData, user_customer_id }) => {
     try {
         let { name, address, contact_no } = customerData;
- 
+
         const updateData = { name, address }
         const [affectedRows] = await Customer.update(updateData, { where: { id: user_customer_id } });
 
@@ -162,9 +162,11 @@ const updateCustomer = async ({ customerData, user_customer_id }) => {
 
 const addQuotationDetail = async (quotationDetailData) => {
     try {
-        const { quote_number, quote_by, created_by, customer_id, merchant_id } = quotationDetailData;
- 
-        const newQuotationDetail = await QuotationDetail.create({ quote_number, quote_by, created_by, customer_id, merchant_id });
+        const { quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep } = quotationDetailData;
+        console.log(quotationDetailData, "heheheh");
+        
+
+        const newQuotationDetail = await QuotationDetail.create({ quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep });
         if (!newQuotationDetail) {
             return ({
                 status: false,
@@ -189,12 +191,12 @@ const addQuotationDetail = async (quotationDetailData) => {
 };
 const updateQuotationDetail = async (quotationDetailData) => {
     try {
-        const { quote_number, quote_by, created_by, customer_id } = quotationDetailData;
+        const { quote_number, quote_by, created_by, customer_id, sales_rep } = quotationDetailData;
 
         const existingQuotationDetail = await QuotationDetail.findOne({ where: { quote_number } });
         if (existingQuotationDetail != null) {
 
-            const updateData = { quote_by, created_by, customer_id }
+            const updateData = { quote_by, created_by, customer_id, sales_rep }
             const [affectedRows] = await QuotationDetail.update(updateData, { where: { id: existingQuotationDetail.id } });
             if (affectedRows === 0) {
                 return ({
@@ -212,7 +214,7 @@ const updateQuotationDetail = async (quotationDetailData) => {
             });
         }
 
-       
+
     } catch (error) {
         console.error(error);
         return ({
@@ -225,8 +227,8 @@ const updateQuotationDetail = async (quotationDetailData) => {
 
 const addQuotationItem = async (quotationItemData) => {
     try {
-        const { quote_id, item_name,name, product_id } = quotationItemData;
-  
+        const { quote_id, item_name, name, product_id } = quotationItemData;
+
         const newQuotationItem = await QuotationItem.create({ quote_id, name, item_name, product_id });
         if (!newQuotationItem) {
             return ({
@@ -254,8 +256,8 @@ const addQuotationItem = async (quotationItemData) => {
 const updateQuotationItem = async (quotationItemData) => {
     try {
         const { quote_id, item_name, name, product_id, id } = quotationItemData;
-        
-        
+
+
         if (id != null) {
 
             const updateData = { quote_id, item_name, name, product_id }
@@ -349,41 +351,7 @@ const addQuotationMaterial = async (quotationMaterialData) => {
         });
     }
 };
-const updateQuotationMaterial = async (quotationMaterialData) => {
-    try {
-        const { material_id, unit_of_measure, qty, price, quote_item_id, id } = quotationMaterialData;
-
-        const existingQuotationMaterial = await QuotationMaterial.findOne({ where: { id } });
-        if (existingQuotationMaterial != null) {
-
-            const updateData = { material_id, unit_of_measure, qty, price, quote_item_id }
-            const [affectedRows] = await QuotationMaterial.update(updateData, { where: { id: existingQuotationMaterial.id } });
-            if (affectedRows === 0) {
-                return ({
-                    status: false,
-                    message: "No changes were made to the QuotationMaterial data. Please check the provided information.",
-                    data: {}
-                });
-            }
-            const quotationMaterial = await QuotationMaterial.findOne({ where: { material_id } });
-
-            return ({
-                status: true,
-                message: "QuotationMaterial updated successfully.",
-                data: quotationMaterial
-            });
-        }
-
-    } catch (error) {
-        console.error(error);
-        return ({
-            status: false,
-            message: "An error occurred. Please try again.",
-            error: error.message
-        });
-    }
-};
-
+  
 const getEstimate = async (data) => {
     try {
         const { user_customer_id } = data;
@@ -410,6 +378,8 @@ const getEstimate = async (data) => {
             if (!quotationItemData || quotationItemData.length === 0) {
                 throw new Error("No quotation items found for quotation detail");
             }
+            console.log(quotationItemData);
+            
 
             const quotationItems = await Promise.all(quotationItemData.data.map(async (quotationItem) => {
                 const quotationMaterialData = await getQuotationMaterial({ quote_item_id: quotationItem.id });
@@ -420,7 +390,7 @@ const getEstimate = async (data) => {
 
                 const subProductData = await Promise.all(quotationMaterialData.data.map(async (subProduct) => {
                     const amount = subProduct.price * subProduct.qty
- 
+
                     const sub_product_id = subProduct.material_id
 
                     const queryCondition = sub_product_id ? { where: { sub_product_id } } : {};
@@ -428,8 +398,8 @@ const getEstimate = async (data) => {
                         ...queryCondition, include: [{
                             model: Unit,
                             as: 'units',
-                        }] 
-                    }); 
+                        }]
+                    });
                     const data = {
                         id: subProduct.id,
                         name: subProduct.merchant_sub_products.name,
@@ -460,7 +430,7 @@ const getEstimate = async (data) => {
                 quotationItem: quotationItems
             };
         }));
- 
+
 
         const finalData = {
             customer: customerData.data,
@@ -487,13 +457,15 @@ const getEstimateCustomerList = async (data) => {
         const { merchant_id } = data;
 
         const customerData = await getCustomer({ merchant_id });
+        
         const results = await Promise.all(
-            customerData?.data.map(async (element) => { 
-                const data = await getQuotationDetails({ customer_id: element.id }); 
-                element.dataValues.quote_number = data?.data[0].quote_number; 
+            customerData?.data.map(async (element) => {
+                const data = await getQuotationDetails({ customer_id: element.id });
+                console.log(data?.data[0]?.quote_number, "hahah");
+                element.dataValues.quote_number = data?.data[0].quote_number;
                 return element;
             })
-        ); 
+        );
         if (!customerData || customerData.length === 0) {
             return {
                 status: false,
@@ -558,7 +530,7 @@ const getCustomer = async (data) => {
 const getQuotationDetails = async (data) => {
     try {
         const { customer_id } = data;
-       
+
         const quotationData = await QuotationDetail.findAll({ where: { customer_id } });
 
         if (!quotationData || quotationData.length === 0) {
@@ -567,7 +539,7 @@ const getQuotationDetails = async (data) => {
                 message: "No quotation data found for the provided quotation ID.",
                 data: {}
             };
-        } 
+        }
 
         return {
             status: true,
@@ -586,7 +558,7 @@ const getQuotationDetails = async (data) => {
 const getQuotationItem = async (data) => {
     try {
         const { quote_id } = data;
-     
+
         const quotationItemData = await QuotationItem.findAll({ where: { quote_id } });
 
         if (!quotationItemData || quotationItemData.length === 0) {
@@ -595,7 +567,7 @@ const getQuotationItem = async (data) => {
                 message: "No quotation item data found for the provided quote ID.",
                 data: {}
             };
-        } 
+        }
 
         return {
             status: true,
@@ -650,11 +622,11 @@ const getQuotationMaterial = async (data) => {
 
 const updateEstimate = async ({ body, user_customer_id }) => {
     try {
-        let { name, address, quote_by, created_by,contact_no, quote_number, quotationItems, merchant_id } = body
-   
+        let { name, address, quote_by, created_by, contact_no, quote_number, quotationItems, merchant_id, sales_rep } = body
+
         const customerData = { name, address, contact_no }
         const newCustomer = await updateCustomer({ customerData, user_customer_id })
-  
+
         if (!newCustomer.status) {
             return ({
                 status: false,
@@ -662,10 +634,10 @@ const updateEstimate = async ({ body, user_customer_id }) => {
                 data: {}
             });
         }
- 
-        const customer_id = user_customer_id 
 
-        const quotationDetailData = { quote_number, quote_by, created_by, customer_id, merchant_id }
+        const customer_id = user_customer_id
+
+        const quotationDetailData = { quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep }
 
         const newQuotationDetail = await updateQuotationDetail(quotationDetailData);
         if (!newQuotationDetail.status) {
@@ -675,52 +647,54 @@ const updateEstimate = async ({ body, user_customer_id }) => {
                 data: {}
             });
         }
- 
+
         quotationItems.map(async (item) => {
-            
-            if(item.total != 0){ 
- 
-            const quotationItemData = {
-                quote_id: newQuotationDetail.data.id,
-                name: item.item_name,
-                item_name: item.name,
-                id: item.id,
-                product_id: item.product_id
-            } 
-      
-            const newQuotationItem = await updateQuotationItem(quotationItemData);
-            if (!newQuotationItem.status) {
-                return ({
-                    status: false,
-                    message: newQuotationItem.message,
-                    data: {}
-                });
-            }
-            let materialData = item.material
-            materialData.map(async (item) => {
 
-                let quotationMaterialData = {
-                    material_id: item.material_id,
-                    unit_of_measure: item.unit_of_measure,
-                    qty: item.qty,
-                    price: item.price,
-                    quote_item_id: newQuotationItem.data.id
+            if (item.total != 0) {
+
+                const quotationItemData = {
+                    quote_id: newQuotationDetail.data.id,
+                    name: item.item_name,
+                    item_name: item.name,
+                    id: item.id,
+                    product_id: item.product_id
                 }
-                item.id ? (quotationMaterialData.id = item.id) : '' 
 
-                const newQuotationMaterial = await addQuotationMaterial(quotationMaterialData);
-                if (!newQuotationMaterial.status) {
+                const newQuotationItem = await updateQuotationItem(quotationItemData);
+                console.log(newQuotationItem);
+                
+                if (!newQuotationItem.status) {
                     return ({
                         status: false,
-                        message: newQuotationMaterial.message,
+                        message: newQuotationItem.message,
                         data: {}
                     });
                 }
+                let materialData = item.material
+                materialData.map(async (item) => {
 
-            })
-            }else{
+                    let quotationMaterialData = {
+                        material_id: item.material_id,
+                        unit_of_measure: item.unit_of_measure,
+                        qty: item.qty,
+                        price: item.price,
+                        quote_item_id: newQuotationItem.data.id
+                    }
+                    item.id ? (quotationMaterialData.id = item.id) : ''
+
+                    const newQuotationMaterial = await addQuotationMaterial(quotationMaterialData);
+                    if (!newQuotationMaterial.status) {
+                        return ({
+                            status: false,
+                            message: newQuotationMaterial.message,
+                            data: {}
+                        });
+                    }
+
+                })
+            } else {
                 await QuotationMaterial.destroy({ where: { quote_item_id: item.id } })
-                await QuotationItem.destroy({ where: { id: item.id } }) 
+                await QuotationItem.destroy({ where: { id: item.id } })
             }
         })
 
