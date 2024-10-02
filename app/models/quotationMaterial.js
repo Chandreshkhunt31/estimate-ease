@@ -48,6 +48,10 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'quote_item_id',
       as: 'quotation_items'
     });
+    Material.belongsTo(models.MerchantSubProduct, {
+      foreignKey: 'material_id',
+      as: 'merchant_sub_products'
+    });
   };
 
   return Material;

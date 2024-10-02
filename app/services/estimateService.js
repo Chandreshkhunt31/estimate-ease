@@ -2,6 +2,10 @@ const Customer = require('../models').Customer;
 const QuotationDetail = require('../models').QuotationDetail;
 const QuotationItem = require('../models').QuotationItem;
 const QuotationMaterial = require('../models').QuotationMaterial;
+const MerchantSubProduct = require('../models').MerchantSubProduct;
+const SubProductUnit = require('../models').SubProductUnit;
+const Unit = require('../models').Unit;
+ 
 
 function getRandomNumber(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
@@ -10,6 +14,9 @@ function getRandomNumber(min, max) {
 const createEstimate = async (body) => {
     try {
         let { name, address, contact_no, quote_by, created_by, quote_number, quotationItems, merchant_id } = body
+
+        console.log(body, "body");
+        
 
         const customerData = { name, address, contact_no, merchant_id }
         const newCustomer = await addCustomer(customerData)
@@ -36,12 +43,20 @@ const createEstimate = async (body) => {
             });
         }
 
+        console.log(quotationItems, "quotationItems");
+        
+
         quotationItems.map(async (item) => {
             const quotationItemData = {
                 quote_id: newQuotationDetail.data.id,
-                item_name: item.item_name,
+                name: item.item_name,
+                item_name: item.name,
                 product_id: item.product_id
             }
+            console.log(item, "item");
+            
+            console.log(quotationItemData, "quotationItemData");
+            
 
             const newQuotationItem = await addQuotationItem(quotationItemData);
             if (!newQuotationItem.status) {
@@ -191,9 +206,9 @@ const addQuotationDetail = async (quotationDetailData) => {
 
 const addQuotationItem = async (quotationItemData) => {
     try {
-        const { quote_id, item_name, product_id } = quotationItemData;
+        const { quote_id, item_name,name, product_id } = quotationItemData;
 
-        const name = item_name
+        // const name = item_name
         // const existingQuotationItem = await QuotationItem.findOne({ where: { name } });
         // if (existingQuotationItem != null) {
 
@@ -215,7 +230,7 @@ const addQuotationItem = async (quotationItemData) => {
         //     });
         // }
 
-        const newQuotationItem = await QuotationItem.create({ quote_id, name, product_id });
+        const newQuotationItem = await QuotationItem.create({ quote_id, name, item_name, product_id });
         if (!newQuotationItem) {
             return ({
                 status: false,
@@ -289,68 +304,126 @@ const addQuotationMaterial = async (quotationMaterialData) => {
         });
     }
 };
- 
+
 const getEstimate = async (data) => {
+    try {
+        const { user_customer_id } = data;
+
+        const customerData = await getCustomer({ user_customer_id });
+
+        if (!customerData || customerData.length === 0) {
+            return {
+                status: false,
+                message: "No customers found",
+                data: {}
+            };
+        }
+
+        const quotationDetailsData = await getQuotationDetails({ customer_id: user_customer_id });
+
+        if (!quotationDetailsData || quotationDetailsData.length === 0) {
+            throw new Error("No quotation details found for customer");
+        }
+
+        const quotationDetails = await Promise.all(quotationDetailsData.data.map(async (quotationDetail) => {
+            const quotationItemData = await getQuotationItem({ quote_id: quotationDetail.id });
+
+            if (!quotationItemData || quotationItemData.length === 0) {
+                throw new Error("No quotation items found for quotation detail");
+            }
+
+            const quotationItems = await Promise.all(quotationItemData.data.map(async (quotationItem) => {
+                const quotationMaterialData = await getQuotationMaterial({ quote_item_id: quotationItem.id });
+
+                if (!quotationMaterialData || quotationMaterialData.length === 0) {
+                    throw new Error("No quotation materials found for quotation item");
+                }
+
+                const subProductData = await Promise.all(quotationMaterialData.data.map(async (subProduct) => {
+                    const amount = subProduct.price * subProduct.qty
+ 
+                    const sub_product_id = subProduct.material_id
+
+                    const queryCondition = sub_product_id ? { where: { sub_product_id } } : {};
+                    const units = await SubProductUnit.findAll({
+                        ...queryCondition, include: [{
+                            model: Unit,
+                            as: 'units',
+                        }]
+                    }); 
+                    const data = {
+                        id: subProduct.id,
+                        name: subProduct.merchant_sub_products.name,
+                        price: subProduct.price,
+                        quantity: subProduct.qty,
+                        SubProductUnits: units,
+                        amount: amount,
+                    }
+                    return data
+
+                }));
+
+                const data = {
+                    id: quotationItem.id,
+                    name: quotationItem.item_name,
+                    total: subProductData.reduce((sum, item) => sum + item.amount, 0),
+                    item_name: quotationItem.name,
+                    product_id: quotationItem.product_id,
+                    subProduct: subProductData
+                }
+
+                return data
+            }));
+
+            return {
+                quotationDetail: quotationDetail,
+                quotationItem: quotationItems
+            };
+        }));
+ 
+
+        const finalData = {
+            customer: customerData.data,
+            quotation: quotationDetails[0]
+        }
+        return {
+            status: true,
+            message: "Customer data retrieved successfully.",
+            data: finalData
+        };
+
+
+    } catch (error) {
+        console.error(error);
+        return ({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+const getEstimateCustomerList = async (data) => {
     try {
         const { merchant_id } = data;
 
-        
-            const customerData = await getCustomer({ merchant_id });
-        
-            if (!customerData || customerData.length === 0) {
-                return {
-                    status: false,
-                    message: "No customers found",
-                    data: {}
-                };
-            }
-        
-            const finalData = await Promise.all(customerData.data.map(async (customer) => {
-                const quotationDetailsData = await getQuotationDetails({ customer_id: customer.id });
-        
-                if (!quotationDetailsData || quotationDetailsData.length === 0) {
-                    throw new Error("No quotation details found for customer");
-                }
-        
-                const quotationDetails = await Promise.all(quotationDetailsData.data.map(async (quotationDetail) => {
-                    const quotationItemData = await getQuotationItem({ quote_id: quotationDetail.id });
-        
-                    if (!quotationItemData || quotationItemData.length === 0) {
-                        throw new Error("No quotation items found for quotation detail");
-                    }
-        
-                    const quotationItems = await Promise.all(quotationItemData.data.map(async (quotationItem) => {
-                        const quotationMaterialData = await getQuotationMaterial({ quote_item_id: quotationItem.id });
-        
-                        if (!quotationMaterialData || quotationMaterialData.length === 0) {
-                            throw new Error("No quotation materials found for quotation item");
-                        }
-        
-                        return {
-                            quotationItem: quotationItem,
-                            quotationMaterial: quotationMaterialData.data
-                        };
-                    }));
-        
-                    return {
-                        quotationDetail: quotationDetail,
-                        quotationItem: quotationItems
-                    };
-                }));
-        
-                return {
-                    customer: customer,
-                    quotation: quotationDetails
-                };
-            }));
-        
+
+        const customerData = await getCustomer({ merchant_id });
+
+        if (!customerData || customerData.length === 0) {
             return {
-                status: true,
-                message: "Customer data retrieved successfully.",
-                data: finalData
+                status: false,
+                message: "No customers found",
+                data: {}
             };
-        
-        
+        }
+
+        return {
+            status: true,
+            message: "Customer data retrieved successfully.",
+            data: customerData.data
+        };
+
+
     } catch (error) {
         console.error(error);
         return ({
@@ -363,8 +436,16 @@ const getEstimate = async (data) => {
 
 const getCustomer = async (data) => {
     try {
-        const { merchant_id } = data;  
-        const customerData = await Customer.findAll({ where: { merchant_id } });
+        const { merchant_id, user_customer_id } = data;
+
+        let customerData = []
+
+        if (user_customer_id != null) {
+            customerData = await Customer.findOne({ where: { id: user_customer_id } });
+        }
+        else {
+            customerData = await Customer.findAll({ where: { merchant_id } });
+        }
 
         if (!customerData || customerData.length === 0) {
             return {
@@ -421,6 +502,8 @@ const getQuotationDetails = async (data) => {
 const getQuotationItem = async (data) => {
     try {
         const { quote_id } = data;
+        console.log(quote_id);
+        
 
         const quotationItemData = await QuotationItem.findAll({ where: { quote_id } });
 
@@ -431,6 +514,8 @@ const getQuotationItem = async (data) => {
                 data: {}
             };
         }
+        console.log(quotationItemData);
+        
 
         return {
             status: true,
@@ -450,7 +535,15 @@ const getQuotationMaterial = async (data) => {
     try {
         const { quote_item_id } = data;
 
-        const quotationMaterialData = await QuotationMaterial.findAll({ where: { quote_item_id } });
+        // const quotationMaterialData = await QuotationMaterial.findAll({ where: { quote_item_id } });
+        const queryCondition = { where: { quote_item_id } }
+        const quotationMaterialData = await QuotationMaterial.findAll({
+            ...queryCondition, include: [{
+                model: MerchantSubProduct,
+                as: 'merchant_sub_products',
+            },
+            ]
+        });
 
         if (!quotationMaterialData || quotationMaterialData.length === 0) {
             return {
@@ -479,5 +572,6 @@ const getQuotationMaterial = async (data) => {
 
 module.exports = {
     createEstimate,
-    getEstimate
+    getEstimate,
+    getEstimateCustomerList
 }

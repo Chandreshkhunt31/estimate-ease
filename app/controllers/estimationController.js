@@ -32,11 +32,41 @@ const addEstimate = async (req, res) => {
         });
     }
 };
+
 const getEstimate = async (req, res) => {
+    try {
+        let { user_customer_id } = req.query   
+        
+
+        const estimateData = await Estimate.getEstimate({user_customer_id}) 
+        if (!estimateData.status) {
+            return res.status(400).json({
+                status: false,
+                message: estimateData.message,
+                data: {}
+            });
+        }
+
+        return res.status(201).json({
+            status: true,
+            message: "Estimate added successfully.",
+            data:  estimateData.data 
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+
+const getEstimateCustomerList = async (req, res) => {
     try {
         let { merchant_id } = req.query  
 
-        const estimateData = await Estimate.getEstimate({merchant_id}) 
+        const estimateData = await Estimate.getEstimateCustomerList({merchant_id}) 
         if (!estimateData.status) {
             return res.status(400).json({
                 status: false,
@@ -65,5 +95,6 @@ const getEstimate = async (req, res) => {
 
 module.exports ={
     addEstimate,
-    getEstimate
+    getEstimate,
+    getEstimateCustomerList
 }

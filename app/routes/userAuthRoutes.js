@@ -11,27 +11,27 @@ router.post('/signup', userSignupValidationRules(), validate, userAuthController
 router.post('/login', loginValidationRules(), validate, userAuthController.login);
 
 const userController = require('../controllers/userController')
- 
+
 router.get("/user/get", authenticateUserJWT, userController.getUser);
 
 
 const merchantProductController = require('../controllers/merchantProductController')
 
-router.get("/merchant-product/list", authenticateUserJWT, merchantProductController.getMerchantProductList); 
+router.get("/merchant-product/list", authenticateUserJWT, merchantProductController.getMerchantProductList);
 
 const merchantSubProductController = require('../controllers/MerchantSubProductController')
 
-router.get("/merchant-sub-product/list", authenticateUserJWT, merchantSubProductController.getMerchantSubProductList); 
+router.get("/merchant-sub-product/list", authenticateUserJWT, merchantSubProductController.getMerchantSubProductList);
 router.post('/merchant-sub-product/add', merchantSubProductValidation(), validate, authenticateUserJWT, merchantSubProductController.addMerchantSubProduct);
- 
+
 const unitController = require('../controllers/unitController')
- 
+
 router.get("/unit/list", authenticateUserJWT, unitController.getUnitList);
 
 const estimateController = require('../controllers/estimationController')
 
 router.post('/estimate/add', authenticateUserJWT, estimateController.addEstimate);
-router.get('/estimate/get',   estimateController.getEstimate);
+router.get('/estimate/get', estimateController.getEstimate);
+router.get('/estimate/customer/list', estimateController.getEstimateCustomerList);
 
 module.exports = router;
-    
