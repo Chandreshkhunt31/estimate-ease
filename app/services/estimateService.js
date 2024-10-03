@@ -1,5 +1,3 @@
-const { log } = require('handlebars/runtime');
-
 const Customer = require('../models').Customer;
 const QuotationDetail = require('../models').QuotationDetail;
 const QuotationItem = require('../models').QuotationItem;
@@ -8,16 +6,11 @@ const MerchantSubProduct = require('../models').MerchantSubProduct;
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
 
-
-function getRandomNumber(min, max) {
-    return Math.floor(Math.random() * (max - min) + min);
-}
-
+ 
 const createEstimate = async (body) => {
     try {
         let { name, address, contact_no, quote_by, created_by, quote_number, quotationItems, merchant_id, sales_rep } = body
-
-
+ 
         const customerData = { name, address, contact_no, merchant_id }
         const newCustomer = await addCustomer(customerData)
 
@@ -31,7 +24,13 @@ const createEstimate = async (body) => {
 
         const customer_id = newCustomer.data.id
 
-        quote_number = quote_number ? quote_number : getRandomNumber(1, 1000);
+        const existingQuotationNumber = await QuotationDetail.findOne({
+            where: { merchant_id },
+            order: [['quote_number', 'DESC']],
+            paranoid: false
+        });
+        
+        quote_number = existingQuotationNumber ? parseInt(existingQuotationNumber.quote_number) + 1 : 1
 
         const quotationDetailData = { quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep }
         const newQuotationDetail = await addQuotationDetail(quotationDetailData);
@@ -365,27 +364,39 @@ const getEstimate = async (data) => {
                 data: {}
             };
         }
-
+      
+ 
         const quotationDetailsData = await getQuotationDetails({ customer_id: user_customer_id });
 
         if (!quotationDetailsData || quotationDetailsData.length === 0) {
-            throw new Error("No quotation details found for customer");
+            return {
+                status: false,
+                message: "No quotation details found for customer",
+                data: {}
+            };  
         }
 
         const quotationDetails = await Promise.all(quotationDetailsData.data.map(async (quotationDetail) => {
             const quotationItemData = await getQuotationItem({ quote_id: quotationDetail.id });
 
-            if (!quotationItemData || quotationItemData.length === 0) {
-                throw new Error("No quotation items found for quotation detail");
+            console.log(quotationItemData.data.length);
+            if (!quotationItemData || quotationItemData.data.length === 0) { 
+                return {
+                    quotationDetail: quotationDetail,
+                }; 
             }
-            console.log(quotationItemData);
+           
             
 
             const quotationItems = await Promise.all(quotationItemData.data.map(async (quotationItem) => {
                 const quotationMaterialData = await getQuotationMaterial({ quote_item_id: quotationItem.id });
 
                 if (!quotationMaterialData || quotationMaterialData.length === 0) {
-                    throw new Error("No quotation materials found for quotation item");
+                    return {
+                        status: false,
+                        message: "No quotation materials found for quotation item",
+                        data: {}
+                    };  
                 }
 
                 const subProductData = await Promise.all(quotationMaterialData.data.map(async (subProduct) => {
@@ -431,6 +442,8 @@ const getEstimate = async (data) => {
             };
         }));
 
+        
+
 
         const finalData = {
             customer: customerData.data,
@@ -440,9 +453,7 @@ const getEstimate = async (data) => {
             status: true,
             message: "Customer data retrieved successfully.",
             data: finalData
-        };
-
-
+        }; 
     } catch (error) {
         console.error(error);
         return ({
@@ -457,30 +468,30 @@ const getEstimateCustomerList = async (data) => {
         const { merchant_id } = data;
 
         const customerData = await getCustomer({ merchant_id });
-        
-        const results = await Promise.all(
-            customerData?.data.map(async (element) => {
-                const data = await getQuotationDetails({ customer_id: element.id });
-                console.log(data?.data[0]?.quote_number, "hahah");
-                element.dataValues.quote_number = data?.data[0].quote_number;
-                return element;
-            })
-        );
-        if (!customerData || customerData.length === 0) {
+     
+        if (!customerData.status || customerData.length === 0) {
+            console.log(1);
+            
             return {
                 status: false,
                 message: "No customers found",
                 data: {}
             };
         }
+        const results = await Promise.all(
+            customerData?.data.map(async (element) => {
+                const data = await getQuotationDetails({ customer_id: element.id }); 
+                element.dataValues.quote_number = data?.data[0] ? data?.data[0].quote_number : 0;
+                element.dataValues.sales_rep = data?.data[0] ? data?.data[0].sales_rep : 0;
+                return element;
+            })
+        );
 
-        return {
+        return { 
             status: true,
             message: "Customer data retrieved successfully.",
             data: results
-        };
-
-
+        }; 
     } catch (error) {
         console.error(error);
         return ({
@@ -565,7 +576,7 @@ const getQuotationItem = async (data) => {
             return {
                 status: false,
                 message: "No quotation item data found for the provided quote ID.",
-                data: {}
+                data: []
             };
         }
 
@@ -702,7 +713,7 @@ const updateEstimate = async ({ body, user_customer_id }) => {
 
         return ({
             status: true,
-            message: "Estimate added successfully.",
+            message: "Estimate updated successfully.",
             data: finalData
         });
     } catch (error) {

@@ -1,6 +1,8 @@
 const Estimate = require("../services/estimateService")
 const QuotationItem = require('../models').QuotationItem;
 const QuotationMaterial = require('../models').QuotationMaterial;
+const QuotationDetail = require('../models').QuotationDetail;
+const Customer = require('../models').Customer;
 
 const addEstimate = async (req, res) => {
     try {
@@ -55,7 +57,7 @@ const editEstimate = async (req, res) => {
 
         return res.status(201).json({
             status: true,
-            message: "Estimate added successfully.",
+            message: "Estimate updated successfully.",
             data: newEstimate.data
         });
     } catch (error) {
@@ -74,19 +76,19 @@ const deleteQuotationItem = async (req, res) => {
 
         await QuotationMaterial.destroy({ where: { quote_item_id: quotation_item_id } })
   
-        const newQuotationItem = await QuotationItem.destroy({ where: { id: quotation_item_id } }) 
-        if (!newQuotationItem.status) {
+        const deleteQuotationItem = await QuotationItem.destroy({ where: { id: quotation_item_id } }) 
+        if (!deleteQuotationItem.status) {
             return res.status(400).json({
                 status: false,
-                message: newQuotationItem.message,
+                message: deleteQuotationItem.message,
                 data: {}
             });
         } 
 
         return res.status(201).json({
             status: true,
-            message: "QuotationItem added successfully.",
-            data: newQuotationItem.data
+            message: "QuotationItem deleted successfully.",
+            data: deleteQuotationItem.data
         });
     } catch (error) {
         console.error(error);
@@ -96,6 +98,76 @@ const deleteQuotationItem = async (req, res) => {
             error: error.message
         });
     }
+};
+
+const deleteEstimate = async (req, res) => {
+    try {
+        const { customer_id } = req.query;  
+   
+        const existingCustomer = await QuotationDetail.findOne({ where: { customer_id  : customer_id} });
+       
+        if (!existingCustomer) {
+            return res.status(404).json({
+                status: false,
+                message: "Customer not found.",
+                data: {}
+            });
+        }
+  
+        const existQuotationItem = await QuotationItem.findAll({ where: { quote_id: existingCustomer.id } }); 
+        if (existQuotationItem.length != 0 ) {
+            for (let i = 0; i < existQuotationItem.length; i++) {
+                const element = existQuotationItem[i];
+    
+                await QuotationMaterial.destroy({ where: { quote_item_id: element.id } });
+    
+                const deleteQuotationItem = await QuotationItem.destroy({ where: { id: element.id } });
+    
+                if (deleteQuotationItem === 0) {
+                    return res.status(404).json({
+                        status: false,
+                        message: "Quotation item not found.",
+                        data: {}
+                    });
+                }
+            } 
+        } 
+          
+       
+
+        const deleteQuotationResult = await QuotationDetail.destroy({ where: { customer_id } });
+  
+        if (!deleteQuotationResult) { 
+            return res.status(404).json({
+                status: false,
+                message: "Quotation detail not found or deleted.",
+                data: {}
+            });
+        }
+         
+        const deleteCustomerResult =  await Customer.destroy({ where: { id: customer_id } }); 
+        if (!deleteCustomerResult) { 
+            return res.status(404).json({
+                status: false,
+                message: "customer not found or deleted.",
+                data: {}
+            });
+        }
+     
+        return res.status(200).json({
+            status: true,
+            message: "Quotation item deleted successfully.",
+            data: "existQuotationItem" 
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+    
 };
 
 const getEstimate = async (req, res) => {
@@ -114,7 +186,7 @@ const getEstimate = async (req, res) => {
 
         return res.status(201).json({
             status: true,
-            message: "Estimate added successfully.",
+            message: "Estimate List.",
             data:  estimateData.data 
         });
     } catch (error) {
@@ -136,13 +208,13 @@ const getEstimateCustomerList = async (req, res) => {
             return res.status(400).json({
                 status: false,
                 message: estimateData.message,
-                data: {}
+                data: []
             });
         }
 
         return res.status(201).json({
             status: true,
-            message: "Estimate added successfully.",
+            message: "Estimate customer list.",
             data:  estimateData.data 
         });
     } catch (error) {
@@ -163,5 +235,6 @@ module.exports ={
     getEstimate,
     getEstimateCustomerList,
     editEstimate,
-    deleteQuotationItem
+    deleteQuotationItem,
+    deleteEstimate
 }

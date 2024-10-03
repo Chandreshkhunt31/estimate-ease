@@ -5,6 +5,7 @@ const { userSignupValidationRules, loginValidationRules, validate } = require('.
 const { customerValidation } = require('../validators/customerValidator');
 const { authenticateUserJWT } = require('../middlewares/authenticateUserJWT')
 const { merchantSubProductValidation } = require('../validators/merchantSubProductValidator');
+const { validateQuotation } = require('../validators/estimateValidator');
 
 const userAuthController = require('../controllers/userAuthController');
 router.post('/signup', userSignupValidationRules(), validate, userAuthController.signup);
@@ -30,10 +31,11 @@ router.get("/unit/list", authenticateUserJWT, unitController.getUnitList);
 
 const estimateController = require('../controllers/estimationController')
 
-router.post('/estimate/add', authenticateUserJWT, estimateController.addEstimate);
-router.put('/estimate/edit',authenticateUserJWT, estimateController.editEstimate); 
-router.delete('/estimate/delete',authenticateUserJWT, estimateController.deleteQuotationItem); 
-router.get('/estimate/get', estimateController.getEstimate);
-router.get('/estimate/customer/list', estimateController.getEstimateCustomerList);
+router.post('/estimate/add', validateQuotation(), validate, authenticateUserJWT, estimateController.addEstimate);
+router.put('/estimate/edit', validateQuotation(), validate, authenticateUserJWT, estimateController.editEstimate);
+router.delete('/estimate/delete', authenticateUserJWT, estimateController.deleteEstimate);
+router.delete('/quotation-item/delete', authenticateUserJWT, estimateController.deleteQuotationItem);
+router.get('/estimate/get', authenticateUserJWT, estimateController.getEstimate);
+router.get('/estimate/customer/list', authenticateUserJWT, estimateController.getEstimateCustomerList);
 
 module.exports = router;
