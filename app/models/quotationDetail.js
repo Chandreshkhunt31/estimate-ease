@@ -24,8 +24,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },  
     quote_number: {
-      type: DataTypes.STRING,
-      unique: true,
+      type: DataTypes.STRING, 
       allowNull: false
     },
     quote_by: {

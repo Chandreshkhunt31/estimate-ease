@@ -162,9 +162,7 @@ const updateCustomer = async ({ customerData, user_customer_id }) => {
 const addQuotationDetail = async (quotationDetailData) => {
     try {
         const { quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep } = quotationDetailData;
-        console.log(quotationDetailData, "heheheh");
-        
-
+     
         const newQuotationDetail = await QuotationDetail.create({ quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep });
         if (!newQuotationDetail) {
             return ({
@@ -378,8 +376,7 @@ const getEstimate = async (data) => {
 
         const quotationDetails = await Promise.all(quotationDetailsData.data.map(async (quotationDetail) => {
             const quotationItemData = await getQuotationItem({ quote_id: quotationDetail.id });
-
-            console.log(quotationItemData.data.length);
+ 
             if (!quotationItemData || quotationItemData.data.length === 0) { 
                 return {
                     quotationDetail: quotationDetail,
@@ -414,6 +411,7 @@ const getEstimate = async (data) => {
                     const data = {
                         id: subProduct.id,
                         name: subProduct.merchant_sub_products.name,
+                        merchant_product_id: subProduct.merchant_sub_products.merchant_product_id,
                         price: subProduct.price,
                         quantity: subProduct.qty,
                         SubProductUnits: units,
@@ -470,7 +468,7 @@ const getEstimateCustomerList = async (data) => {
         const customerData = await getCustomer({ merchant_id });
      
         if (!customerData.status || customerData.length === 0) {
-            console.log(1);
+             
             
             return {
                 status: false,
@@ -672,7 +670,7 @@ const updateEstimate = async ({ body, user_customer_id }) => {
                 }
 
                 const newQuotationItem = await updateQuotationItem(quotationItemData);
-                console.log(newQuotationItem);
+             
                 
                 if (!newQuotationItem.status) {
                     return ({

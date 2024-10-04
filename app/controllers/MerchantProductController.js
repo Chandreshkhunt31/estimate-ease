@@ -91,8 +91,8 @@ const updateMerchantProduct = async (req, res) => {
 
 const getMerchantProductList = async (req, res) => {
     try {
-        const { merchant_id, is_exist } = req.query;
-
+        const { merchant_id } = req.query;
+        
         const queryCondition = merchant_id ? { where: { merchant_id } } : {};
 
         const merchantProductList = await MerchantProduct.findAll({
@@ -103,22 +103,7 @@ const getMerchantProductList = async (req, res) => {
             },
             ]
         });
-
-        if(is_exist == "true"){ 
-           
-            const data = merchantProductList.map((item) => item.product_id)
- 
- 
-            // if (merchantProductList.length === 0) {
-                return res.status(404).json({
-                    status: false,
-                    message: "No merchant products found for the given criteria.",
-                    data: isExistMerchantProductList
-                });
-            // }
-        }
-
-
+  
         if (merchantProductList.length === 0) {
             return res.status(404).json({
                 status: false,
@@ -126,7 +111,7 @@ const getMerchantProductList = async (req, res) => {
                 data: []
             });
         }
-
+ 
         return res.status(200).json({
             status: true,
             message: "Merchant product list retrieved successfully.",
