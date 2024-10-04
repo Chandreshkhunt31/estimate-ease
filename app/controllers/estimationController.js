@@ -21,6 +21,12 @@ const addEstimate = async (req, res) => {
             });
         }
 
+        
+        if(body.isPdf){
+            body.quote_number = newEstimate.data.quote_number
+            await Estimate.generatePdf(body) 
+        }
+
         return res.status(201).json({
             status: true,
             message: "Estimate added successfully.",

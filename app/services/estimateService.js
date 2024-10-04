@@ -5,6 +5,10 @@ const QuotationMaterial = require('../models').QuotationMaterial;
 const MerchantSubProduct = require('../models').MerchantSubProduct;
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
+const puppeteer = require('puppeteer');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
  
 const createEstimate = async (body) => {
@@ -30,7 +34,10 @@ const createEstimate = async (body) => {
             paranoid: false
         });
         
+        
         quote_number = existingQuotationNumber ? parseInt(existingQuotationNumber.quote_number) + 1 : 1
+        // console.log(existingQuotationNumber.quote_number);
+        console.log(quote_number);
 
         const quotationDetailData = { quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep }
         const newQuotationDetail = await addQuotationDetail(quotationDetailData);
@@ -723,6 +730,123 @@ const updateEstimate = async ({ body, user_customer_id }) => {
         });
     }
 };
+const generatePdf = async (body) => {
+    
+         
+        const { name, address, contact_no, quote_by, salesContact, quote_number, sales_rep, date, quotationItems } = body
+        try {
+
+            let html = fs.readFileSync(path.join(__dirname, 'template.html'), 'utf8');
+    
+            html = html.replace('{{name}}', name || '')
+                .replace('{{address}}', address || '')
+                .replace('{{contact_no}}', contact_no || '')
+                .replace('{{quote_by}}', quote_by || '')
+                .replace('{{salesContact}}', salesContact || '')
+                .replace('{{sales_rep}}', sales_rep || '')
+                .replace('{{date}}', date || '')
+                .replace('{{quote_number}}', quote_number || '');
+    
+    
+            let itemsHtml = '';
+    
+            let lastTotal = 0
+            if (Array.isArray(quotationItems)) {
+                quotationItems.forEach(item => {
+    
+    
+                    let materialsHtml = '';
+                    let finalTotal = 0;
+    
+                    if (Array.isArray(item.material)) {
+                        item.material.forEach((material, index) => {
+                            let total = material.price * material.qty;
+                            finalTotal += total;
+    
+                            materialsHtml += `
+                                <tr>
+                                    ${index === 0 ? `<td rowSpan=${item.material.length} class=''>
+                                        <label>${item.item_name || 'N/A'}</label>
+                                        </br>
+                                        <label>${item.name || ''}</label>
+                                    </td>` : ''}
+    
+                                    <td>${material.name || ''}</td>
+                                    <td>${material.unit_of_measure || ''}</td>
+                                    <td>${material.qty || ''}</td>
+                                    <td>${material.price || ''}</td>
+                                    <td>${total || ''}</td>
+    
+                                    ${index === 0 ? `<td rowSpan=${item.material.length} class='align-content-center'>
+                                        <div class='d-flex'>
+                                            ${item.total}
+                                        </div>
+                                    </td>` : ''}
+                                </tr>
+                            `;
+                        });
+                    }
+                    lastTotal += finalTotal
+    
+                    itemsHtml += `
+                                ${materialsHtml}
+                                            
+                    `;
+                });
+            } else {
+                itemsHtml = '<p>No items available.</p>';
+            }
+    
+            itemsHtml += `
+                                <tr>
+                                    <td colspan="6" class="text-right"><strong>Final Total:</strong></td>
+                                    <td>${lastTotal.toFixed(2)}</td>
+                                </tr>
+                        `;
+    
+    
+            html = html.replace('{{#quotationItems}}', itemsHtml);
+    
+    
+    
+            const browser = await puppeteer.launch();
+            const page = await browser.newPage();
+    
+            await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    
+            const homeDir = os.homedir();
+            const downloadFolder = path.join(homeDir, 'Downloads');
+    
+            if (!fs.existsSync(downloadFolder)) {
+                console.error('Downloads folder not found!');
+                return;
+            }
+    
+            const pdfPath = path.join(downloadFolder, `${name}.pdf`);
+    
+            await page.pdf({
+                path: pdfPath,
+                format: 'A4',
+                printBackground: true,
+            });
+    
+            await browser.close();
+    
+            
+            return ({
+                status: true,
+                message: "Pdf generated successfully.",
+                data: {}
+            }); 
+    } catch (error) {
+        console.error(error);
+        return ({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
 
 
 
@@ -730,5 +854,6 @@ module.exports = {
     createEstimate,
     getEstimate,
     getEstimateCustomerList,
-    updateEstimate
+    updateEstimate,
+    generatePdf
 }
