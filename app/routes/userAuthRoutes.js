@@ -37,5 +37,6 @@ router.delete('/estimate/delete', authenticateUserJWT, estimateController.delete
 router.delete('/quotation-item/delete', authenticateUserJWT, estimateController.deleteQuotationItem);
 router.get('/estimate/get', authenticateUserJWT, estimateController.getEstimate);
 router.get('/estimate/customer/list', authenticateUserJWT, estimateController.getEstimateCustomerList);
+router.get('/generate/pdf', authenticateUserJWT, estimateController.generatePdf);
 
 module.exports = router;

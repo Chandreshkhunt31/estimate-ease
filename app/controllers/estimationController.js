@@ -20,13 +20,6 @@ const addEstimate = async (req, res) => {
                 data: {}
             });
         }
-
-        
-        if(body.isPdf){
-            body.quote_number = newEstimate.data.quote_number
-            await Estimate.generatePdf(body) 
-        }
-
         return res.status(201).json({
             status: true,
             message: "Estimate added successfully.",
@@ -83,10 +76,10 @@ const deleteQuotationItem = async (req, res) => {
         await QuotationMaterial.destroy({ where: { quote_item_id: quotation_item_id } })
   
         const deleteQuotationItem = await QuotationItem.destroy({ where: { id: quotation_item_id } }) 
-        if (!deleteQuotationItem.status) {
+        if (!deleteQuotationItem) {
             return res.status(400).json({
                 status: false,
-                message: deleteQuotationItem.message,
+                message: "QuotationItem not found",
                 data: {}
             });
         } 
@@ -138,9 +131,7 @@ const deleteEstimate = async (req, res) => {
                 }
             } 
         } 
-          
-       
-
+           
         const deleteQuotationResult = await QuotationDetail.destroy({ where: { customer_id } });
   
         if (!deleteQuotationResult) { 
@@ -179,8 +170,7 @@ const deleteEstimate = async (req, res) => {
 const getEstimate = async (req, res) => {
     try {
         let { user_customer_id } = req.query   
-        
-
+         
         const estimateData = await Estimate.getEstimate({user_customer_id}) 
         if (!estimateData.status) {
             return res.status(400).json({
@@ -232,6 +222,26 @@ const getEstimateCustomerList = async (req, res) => {
         });
     }
 };
+const generatePdf = async (req, res) => {
+    try {
+        let { user_customer_id } = req.query  
+        const user_id = req.id
+
+        const pdfData = await Estimate.generatePdf({user_customer_id, user_id})  
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="generated.pdf"'); 
+        res.send(pdfData.data);
+        
+         
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
 
 
 
@@ -242,5 +252,6 @@ module.exports ={
     getEstimateCustomerList,
     editEstimate,
     deleteQuotationItem,
-    deleteEstimate
+    deleteEstimate,
+    generatePdf
 }
