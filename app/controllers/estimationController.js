@@ -110,7 +110,7 @@ const deleteEstimate = async (req, res) => {
                 status: false,
                 message: "Customer not found.",
                 data: {}
-            });
+            }); 
         }
   
         const existQuotationItem = await QuotationItem.findAll({ where: { quote_id: existingCustomer.id } }); 
@@ -169,9 +169,9 @@ const deleteEstimate = async (req, res) => {
 
 const getEstimate = async (req, res) => {
     try {
-        let { user_customer_id } = req.query   
+        let { user_customer_id, merchant_product_id } = req.query   
          
-        const estimateData = await Estimate.getEstimate({user_customer_id}) 
+        const estimateData = await Estimate.getEstimate({user_customer_id, merchant_product_id}) 
         if (!estimateData.status) {
             return res.status(400).json({
                 status: false,

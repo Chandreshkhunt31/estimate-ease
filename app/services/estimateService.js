@@ -3,6 +3,8 @@ const QuotationDetail = require('../models').QuotationDetail;
 const QuotationItem = require('../models').QuotationItem;
 const QuotationMaterial = require('../models').QuotationMaterial;
 const MerchantSubProduct = require('../models').MerchantSubProduct;
+const MerchantProduct = require('../models').MerchantProduct;
+const Product = require('../models').Product;
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
 const User = require('../models').User;
@@ -359,7 +361,7 @@ const addQuotationMaterial = async (quotationMaterialData) => {
 
 const getEstimate = async (data) => {
     try {
-        const { user_customer_id } = data;
+        const { user_customer_id, merchant_product_id } = data;
 
         const customerData = await getCustomer({ user_customer_id });
 
@@ -394,7 +396,22 @@ const getEstimate = async (data) => {
 
 
             const quotationItems = await Promise.all(quotationItemData.data.map(async (quotationItem) => {
-                const quotationMaterialData = await getQuotationMaterial({ quote_item_id: quotationItem.id });
+                const merchantProduct = await MerchantProduct.findByPk(merchant_product_id);
+                 
+                const merchantProductId = merchantProduct ? merchantProduct.product_id : ''
+
+                const product = await Product.findByPk(merchantProductId);
+                
+                let isExist = false
+                if (product && product.name == quotationItem.name) { 
+                    (isExist = true)
+                } else {
+                    (isExist = false)
+                }
+
+                const quotationMaterialData = await getQuotationMaterial({ quote_item_id: quotationItem.id, isExist, merchantProductId });
+ 
+                
 
                 if (!quotationMaterialData || quotationMaterialData.length === 0) {
                     return {
@@ -408,7 +425,7 @@ const getEstimate = async (data) => {
                     const amount = subProduct.price * subProduct.qty
 
                     const sub_product_id = subProduct.material_id
-
+ 
                     const queryCondition = sub_product_id ? { where: { sub_product_id } } : {};
                     const units = await SubProductUnit.findAll({
                         ...queryCondition, include: [{
@@ -416,6 +433,9 @@ const getEstimate = async (data) => {
                             as: 'units',
                         }]
                     });
+
+                    // console.log(units);
+                    
                     const data = {
                         id: subProduct.id,
                         name: subProduct.merchant_sub_products.name,
@@ -534,12 +554,12 @@ const getCustomer = async (data) => {
             status: true,
             message: "Customer data retrieved successfully.",
             data: customerData
-        };
+        }; 
     } catch (error) {
         console.error(error);
         return ({
             status: false,
-            message: "An error occurred. Please try again.",
+            message: "An error occurred. Please try again.", 
             error: error.message
         });
     }
@@ -587,7 +607,7 @@ const getQuotationItem = async (data) => {
             };
         }
 
-        return {
+        return { 
             status: true,
             message: "Quotation Item data retrieved successfully.",
             data: quotationItemData
@@ -603,9 +623,8 @@ const getQuotationItem = async (data) => {
 };
 const getQuotationMaterial = async (data) => {
     try {
-        const { quote_item_id } = data;
+        const { quote_item_id, isExist, merchantProductId } = data; 
 
-        // const quotationMaterialData = await QuotationMaterial.findAll({ where: { quote_item_id } });
         const queryCondition = { where: { quote_item_id } }
         const quotationMaterialData = await QuotationMaterial.findAll({
             ...queryCondition, include: [{
@@ -614,7 +633,35 @@ const getQuotationMaterial = async (data) => {
             },
             ]
         });
-
+        if (isExist) { 
+            const mergedData = [...quotationMaterialData]; 
+            const merchantProducts = await MerchantSubProduct.findAll({ where: { merchant_product_id: merchantProductId } });
+            
+            merchantProducts.forEach(item2 => { 
+                const exists = mergedData.some(item1 => item1.material_id === item2.id);
+                if (!exists) {  
+                    const data = { 
+                        material_id: item2.id,
+                        unit_of_measure: item2.unit_of_measure,
+                        qty: 0,
+                        price: item2.price,
+                        merchant_sub_products: {
+                            name: item2.name,
+                            merchant_product_id: merchantProductId
+                        }
+                    }
+                    mergedData.push(data);
+                }
+            });
+  
+            return {
+                status: true,
+                message: "Quotation Material data retrieved successfully.",
+                data: mergedData
+            };
+            
+        } 
+        
         if (!quotationMaterialData || quotationMaterialData.length === 0) {
             return {
                 status: false,
@@ -991,3 +1038,5 @@ module.exports = {
     updateEstimate,
     generatePdf
 }
+ 
+ 
