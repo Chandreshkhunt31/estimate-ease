@@ -1,5 +1,4 @@
-const { where } = require('sequelize');
-
+const QuotationMaterial = require('../models').QuotationMaterial;
 const MerchantSubProduct = require('../models').MerchantSubProduct;
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
@@ -247,6 +246,16 @@ const deleteMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
+
+        const isExistSubProduct = await QuotationMaterial.findAll({ where: { material_id: merchant_sub_product_id } })
+      
+        if (isExistSubProduct.length != 0) { 
+            return res.status(400).json({
+                status: false,
+                message: "This product is currently in use and cannot be deleted.",
+                data: {}
+            }); 
+        } 
 
         await SubProductUnit.destroy({ where: { sub_product_id: merchant_sub_product_id } });
 

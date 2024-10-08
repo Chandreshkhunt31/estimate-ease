@@ -3,6 +3,8 @@ const Merchant = require('../models').Merchant;
 const Product = require('../models').Product;
 const MerchantSubProduct = require('../models').MerchantSubProduct;
 const SubProductUnit = require('../models').SubProductUnit;
+const QuotationMaterial = require('../models').QuotationMaterial;
+
 
 // insert Merchant Product
 const addMerchantProduct = async (req, res) => {
@@ -175,9 +177,18 @@ const deleteMerchantProduct = async (req, res) => {
                 message: "Merchant Product ID is required."
             });
         }
-
-        const MerchantSubProductData = await MerchantSubProduct.findAll({ where: { merchant_product_id: merchant_product_id } });
-
+ 
+        const MerchantSubProductData = await MerchantSubProduct.findAll({ where: { merchant_product_id: merchant_product_id } }); 
+        const isExistSubProduct = MerchantSubProductData.map(async (item) => await QuotationMaterial.findAll({ where: { material_id: item.id } }))
+  
+        if (isExistSubProduct.length != 0) { 
+            return res.status(400).json({
+                status: false,
+                message: "This product is currently in use and cannot be deleted.",
+                data: {}
+            });
+    
+        } 
         await Promise.all(MerchantSubProductData.map(item => SubProductUnit.destroy({ where: { sub_product_id: item.id } })));
 
         await MerchantSubProduct.destroy({ where: { merchant_product_id: merchant_product_id } });

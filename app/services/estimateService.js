@@ -2,16 +2,13 @@ const Customer = require('../models').Customer;
 const QuotationDetail = require('../models').QuotationDetail;
 const QuotationItem = require('../models').QuotationItem;
 const QuotationMaterial = require('../models').QuotationMaterial;
-const MerchantSubProduct = require('../models').MerchantSubProduct;
-const MerchantProduct = require('../models').MerchantProduct;
-const Product = require('../models').Product;
+const MerchantSubProduct = require('../models').MerchantSubProduct; 
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
 const User = require('../models').User;
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const path = require('path');
-const os = require('os');
+const path = require('path'); 
 const { Sequelize } = require('sequelize');
 
 const createEstimate = async (body) => {
@@ -29,19 +26,15 @@ const createEstimate = async (body) => {
             });
         }
 
-        const customer_id = newCustomer.data.id
-
+        const customer_id = newCustomer.data.id 
         const existingQuotationNumber = await QuotationDetail.findOne({
             where: { merchant_id },
             order: [[Sequelize.cast(Sequelize.col('quote_number'), 'INTEGER'), 'DESC']],
             paranoid: false,
         });
-
-
+ 
         quote_number = existingQuotationNumber ? parseInt(existingQuotationNumber.quote_number) + 1 : 1
-        // console.log(existingQuotationNumber.quote_number);
-        console.log(quote_number);
-
+  
         const quotationDetailData = { quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep }
         const newQuotationDetail = await addQuotationDetail(quotationDetailData);
         if (!newQuotationDetail.status) {
@@ -70,24 +63,25 @@ const createEstimate = async (body) => {
                     });
                 }
                 let materialData = item.material
-                materialData.map(async (item) => {
+                materialData.map(async (item) => { 
+                    if (item.qty != 0) { 
+                        let quotationMaterialData = {
+                            material_id: item.material_id,
+                            unit_of_measure: item.unit_of_measure,
+                            qty: item.qty,
+                            price: item.price,
+                            quote_item_id: newQuotationItem.data.id
+                        }
+                        item.id ? (quotationMaterialData.id = item.id) : ''
 
-                    let quotationMaterialData = {
-                        material_id: item.material_id,
-                        unit_of_measure: item.unit_of_measure,
-                        qty: item.qty,
-                        price: item.price,
-                        quote_item_id: newQuotationItem.data.id
-                    }
-                    item.id ? (quotationMaterialData.id = item.id) : ''
-
-                    const newQuotationMaterial = await addQuotationMaterial(quotationMaterialData);
-                    if (!newQuotationMaterial.status) {
-                        return ({
-                            status: false,
-                            message: newQuotationMaterial.message,
-                            data: {}
-                        });
+                        const newQuotationMaterial = await addQuotationMaterial(quotationMaterialData);
+                        if (!newQuotationMaterial.status) {
+                            return ({
+                                status: false,
+                                message: newQuotationMaterial.message,
+                                data: {}
+                            });
+                        }
                     }
                 })
             }
@@ -109,8 +103,7 @@ const createEstimate = async (body) => {
         });
     }
 };
-
-
+ 
 const addCustomer = async (customerData) => {
     try {
         let { name, address, contact_no, merchant_id } = customerData;
@@ -263,8 +256,7 @@ const addQuotationItem = async (quotationItemData) => {
 const updateQuotationItem = async (quotationItemData) => {
     try {
         const { quote_id, item_name, name, product_id, id } = quotationItemData;
-
-
+ 
         if (id != null) {
 
             const updateData = { quote_id, item_name, name, product_id }
@@ -373,7 +365,6 @@ const getEstimate = async (data) => {
             };
         }
 
-
         const quotationDetailsData = await getQuotationDetails({ customer_id: user_customer_id });
 
         if (!quotationDetailsData || quotationDetailsData.length === 0) {
@@ -393,27 +384,46 @@ const getEstimate = async (data) => {
                 };
             }
 
-
-
             const quotationItems = await Promise.all(quotationItemData.data.map(async (quotationItem) => {
-                const merchantProduct = await MerchantProduct.findByPk(merchant_product_id);
-                 
-                const merchantProductId = merchantProduct ? merchantProduct.product_id : ''
+                const quotationMaterialData = await getQuotationMaterial({ quote_item_id: quotationItem.id }); 
+                const queryCondition = { where: { merchant_product_id: quotationItem.product_id } }
 
-                const product = await Product.findByPk(merchantProductId);
-                
-                let isExist = false
-                if (product && product.name == quotationItem.name) { 
-                    (isExist = true)
-                } else {
-                    (isExist = false)
-                }
+                const merchantSubProductsData = await MerchantSubProduct.findAll({
+                    ...queryCondition,
+                    include: [{
+                        model: SubProductUnit,
+                        as: 'SubProductUnits',
+                        include: [
+                            {
+                                model: Unit,
+                                as: 'units'
+                            }
+                        ]
+                    }]
+                });
+                const finalTable = merchantSubProductsData.map((merchantSubProducts) => {
+                    let matchedQuotationMaterial = null;
 
-                const quotationMaterialData = await getQuotationMaterial({ quote_item_id: quotationItem.id, isExist, merchantProductId });
+                    quotationMaterialData.data.forEach((quotationMaterial) => {
+                        if (merchantSubProducts.name === quotationMaterial.merchant_sub_products.name) {
+                            matchedQuotationMaterial = quotationMaterial;
+                        }
+                    });
+
+                    const data = {
+                        price: merchantSubProducts.price,
+                        qty: merchantSubProducts.qty ? merchantSubProducts.qty : 0,
+                        material_id: merchantSubProducts.id,
+                        unit_of_measure: merchantSubProducts.SubProductUnits.map(unit => unit.units.name).join(', '),
+                        merchant_sub_products: {
+                            name: merchantSubProducts.name,
+                            merchant_product_id: merchantSubProducts.merchant_product_id,
+                        }
+                    }; 
+                    return matchedQuotationMaterial ? matchedQuotationMaterial : data;
+                });
  
-                
-
-                if (!quotationMaterialData || quotationMaterialData.length === 0) {
+                if (!finalTable || finalTable.length === 0) {
                     return {
                         status: false,
                         message: "No quotation materials found for quotation item",
@@ -421,11 +431,11 @@ const getEstimate = async (data) => {
                     };
                 }
 
-                const subProductData = await Promise.all(quotationMaterialData.data.map(async (subProduct) => {
+                const subProductData = await Promise.all(finalTable.map(async (subProduct) => {
                     const amount = subProduct.price * subProduct.qty
 
                     const sub_product_id = subProduct.material_id
- 
+
                     const queryCondition = sub_product_id ? { where: { sub_product_id } } : {};
                     const units = await SubProductUnit.findAll({
                         ...queryCondition, include: [{
@@ -434,14 +444,12 @@ const getEstimate = async (data) => {
                         }]
                     });
 
-                    // console.log(units);
-                    
                     const data = {
                         id: subProduct.id,
                         name: subProduct.merchant_sub_products.name,
                         merchant_product_id: subProduct.merchant_sub_products.merchant_product_id,
                         price: subProduct.price,
-                        qty: subProduct.qty,
+                        qty: subProduct.qty ? subProduct.qty : 0,
                         SubProductUnits: units,
                         material_id: subProduct.material_id,
                         amount: amount,
@@ -459,7 +467,6 @@ const getEstimate = async (data) => {
                     product_id: quotationItem.product_id,
                     subProduct: subProductData
                 }
-
                 return data
             }));
 
@@ -468,10 +475,6 @@ const getEstimate = async (data) => {
                 quotationItem: quotationItems
             };
         }));
-
-
-
-
         const finalData = {
             customer: customerData.data,
             quotation: quotationDetails[0]
@@ -490,15 +493,14 @@ const getEstimate = async (data) => {
         });
     }
 };
+
 const getEstimateCustomerList = async (data) => {
     try {
         const { merchant_id } = data;
 
         const customerData = await getCustomer({ merchant_id });
 
-        if (!customerData.status || customerData.length === 0) {
-
-
+        if (!customerData.status || customerData.length === 0) { 
             return {
                 status: false,
                 message: "No customers found",
@@ -554,12 +556,12 @@ const getCustomer = async (data) => {
             status: true,
             message: "Customer data retrieved successfully.",
             data: customerData
-        }; 
+        };
     } catch (error) {
         console.error(error);
         return ({
             status: false,
-            message: "An error occurred. Please try again.", 
+            message: "An error occurred. Please try again.",
             error: error.message
         });
     }
@@ -607,7 +609,7 @@ const getQuotationItem = async (data) => {
             };
         }
 
-        return { 
+        return {
             status: true,
             message: "Quotation Item data retrieved successfully.",
             data: quotationItemData
@@ -623,7 +625,7 @@ const getQuotationItem = async (data) => {
 };
 const getQuotationMaterial = async (data) => {
     try {
-        const { quote_item_id, isExist, merchantProductId } = data; 
+        const { quote_item_id } = data;
 
         const queryCondition = { where: { quote_item_id } }
         const quotationMaterialData = await QuotationMaterial.findAll({
@@ -633,35 +635,7 @@ const getQuotationMaterial = async (data) => {
             },
             ]
         });
-        if (isExist) { 
-            const mergedData = [...quotationMaterialData]; 
-            const merchantProducts = await MerchantSubProduct.findAll({ where: { merchant_product_id: merchantProductId } });
-            
-            merchantProducts.forEach(item2 => { 
-                const exists = mergedData.some(item1 => item1.material_id === item2.id);
-                if (!exists) {  
-                    const data = { 
-                        material_id: item2.id,
-                        unit_of_measure: item2.unit_of_measure,
-                        qty: 0,
-                        price: item2.price,
-                        merchant_sub_products: {
-                            name: item2.name,
-                            merchant_product_id: merchantProductId
-                        }
-                    }
-                    mergedData.push(data);
-                }
-            });
-  
-            return {
-                status: true,
-                message: "Quotation Material data retrieved successfully.",
-                data: mergedData
-            };
-            
-        } 
-        
+ 
         if (!quotationMaterialData || quotationMaterialData.length === 0) {
             return {
                 status: false,
@@ -700,8 +674,7 @@ const updateEstimate = async ({ body, user_customer_id }) => {
             });
         }
 
-        const customer_id = user_customer_id
-
+        const customer_id = user_customer_id 
         const quotationDetailData = { quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep }
 
         const newQuotationDetail = await updateQuotationDetail(quotationDetailData);
@@ -711,12 +684,10 @@ const updateEstimate = async ({ body, user_customer_id }) => {
                 message: newQuotationDetail.message,
                 data: {}
             });
-        }
+        } 
 
-        quotationItems.map(async (item) => {
-
-            if (item.total != 0) {
-
+        quotationItems.map(async (item) => { 
+            if (item.total != 0) { 
                 const quotationItemData = {
                     quote_id: newQuotationDetail.data.id,
                     name: item.item_name,
@@ -725,9 +696,7 @@ const updateEstimate = async ({ body, user_customer_id }) => {
                     product_id: item.product_id
                 }
 
-                const newQuotationItem = await updateQuotationItem(quotationItemData);
-
-
+                const newQuotationItem = await updateQuotationItem(quotationItemData); 
                 if (!newQuotationItem.status) {
                     return ({
                         status: false,
@@ -736,26 +705,28 @@ const updateEstimate = async ({ body, user_customer_id }) => {
                     });
                 }
                 let materialData = item.material
-                materialData.map(async (item) => {
+                materialData.map(async (item) => { 
+                    if (item.qty != 0) {
+                        let quotationMaterialData = {
+                            material_id: item.material_id,
+                            unit_of_measure: item.unit_of_measure,
+                            qty: item.qty,
+                            price: item.price,
+                            quote_item_id: newQuotationItem.data.id
+                        }
+                        item.id ? (quotationMaterialData.id = item.id) : ''
 
-                    let quotationMaterialData = {
-                        material_id: item.material_id,
-                        unit_of_measure: item.unit_of_measure,
-                        qty: item.qty,
-                        price: item.price,
-                        quote_item_id: newQuotationItem.data.id
-                    }
-                    item.id ? (quotationMaterialData.id = item.id) : ''
-
-                    const newQuotationMaterial = await addQuotationMaterial(quotationMaterialData);
-                    if (!newQuotationMaterial.status) {
-                        return ({
-                            status: false,
-                            message: newQuotationMaterial.message,
-                            data: {}
-                        });
-                    }
-
+                        const newQuotationMaterial = await addQuotationMaterial(quotationMaterialData);
+                        if (!newQuotationMaterial.status) {
+                            return ({
+                                status: false,
+                                message: newQuotationMaterial.message,
+                                data: {}
+                            });
+                        } 
+                    } else {
+                        await QuotationMaterial.destroy({ where: { id: item.id } })
+                    } 
                 })
             } else {
                 await QuotationMaterial.destroy({ where: { quote_item_id: item.id } })
@@ -779,6 +750,7 @@ const updateEstimate = async ({ body, user_customer_id }) => {
         });
     }
 };
+
 const generatePdf = async ({ user_customer_id, user_id }) => {
     const estimateData = await getEstimate({ user_customer_id })
     if (!estimateData.status) {
@@ -788,11 +760,10 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
             data: {}
         });
     }
-
-
+ 
     const getUserData = await User.findOne({ where: { id: user_id } })
     if (!getUserData) {
-        return res.status(409).json({
+        return ({
             status: false,
             message: "This user is not exists. Please try another one."
         });
@@ -800,9 +771,7 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
 
     const existCustomer = estimateData.data.customer
     const existQuotationDetail = estimateData.data.quotation.quotationDetail
-    const existQuotationItems = estimateData.data.quotation.quotationItem ? estimateData.data.quotation.quotationItem : []
-
-
+    const existQuotationItems = estimateData.data.quotation.quotationItem ? estimateData.data.quotation.quotationItem : [] 
     const formattedDate = new Date(existCustomer.created_at).toISOString().slice(0, 10);
 
     const transformData = (existQuotationItems) => {
@@ -811,10 +780,7 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
             material: item.subProduct,
             subProduct: undefined
         }));
-    };
-
-
-
+    }; 
     const newData = transformData(existQuotationItems);
 
     const finalData = {
@@ -831,8 +797,8 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
     }
 
     const { name, address, contact_no, quote_by, salesContact, quote_number, sales_rep, date, quotationItems } = finalData
-    try {
 
+    try { 
         let html = fs.readFileSync(path.join(__dirname, 'template.html'), 'utf8');
 
         html = html.replace('{{name}}', name || '')
@@ -856,71 +822,38 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
                 let finalTotal = 0;
 
                 if (Array.isArray(item.material)) {
-                    // item.material.forEach((material, index) => {
-                    //     if (material.qty) {
-                    //         console.log(material.qty, "shsh");
-                    //         console.log(material.index, "shsh");
-
-
-                    //         let total = material.price * material.qty;
-                    //         finalTotal += total;
-
-                    //         materialsHtml += `
-                    //             <tr>
-                    //                 ${index === 0 ? `<td rowSpan=${item.material.length} class=''>
-                    //                     <label>${item.item_name || 'N/A'}</label>
-                    //                     </br>
-                    //                     <label>${item.name || ''}</label>
-                    //                 </td>` : ''}
-    
-                    //                 <td>${material.name || ''}</td>
-                    //                 <td>${material.unit_of_measure || ''}</td>
-                    //                 <td>${material.qty || ''}</td>
-                    //                 <td>${material.price || ''}</td>
-                    //                 <td>${total || ''}</td>
-    
-                    //                 ${index === 0 ? `<td rowSpan=${item.material.length} class='align-content-center'>
-                    //                     <div class='d-flex'>
-                    //                         ${item.total}
-                    //                     </div>
-                    //                 </td>` : ''}
-                    //             </tr>
-                    //         `;
-                    //     } else {
-                    //         materialsHtml = materialsHtml
-                    //     }
-                    // });
+                   
                     let validMaterials = item.material.filter(material => material.qty);
-let validMaterialsCount = validMaterials.length;
+                    let validMaterialsCount = validMaterials.length;
 
-item.material.forEach((material, index) => {
-    if (material.qty) {
-        let total = material.price * material.qty;
-        finalTotal += total;
+                    item.material.forEach((material, index) => {
+                        if (material.qty) {
+                            let total = material.price * material.qty;
+                            finalTotal += total;
 
-        materialsHtml += `
-            <tr>
-                ${index === 0 ? `<td rowSpan=${validMaterialsCount} class=''>
-                    <label>${item.item_name || 'N/A'}</label>
-                    </br>
-                    <label>${item.name || ''}</label>
-                </td>` : ''}
-    
-                <td>${material.name || ''}</td>
-                <td>${material.unit_of_measure || ''}</td>
-                <td>${material.qty || ''}</td>
-                <td>${material.price || ''}</td>
-                <td class='align-content-center'> <div class='d-flex'>${total || ''}</div></td>
-    
-                ${index === 0 ? `<td rowSpan=${validMaterialsCount} class='align-content-center'>
-                    <div class='d-flex'>
-                        ${item.total}
-                    </div>
-                </td>` : ''}
-            </tr>
-        `;
-    }
-});
+                            materialsHtml += `
+                                    <tr>
+                                        ${index === 0 ? `<td rowSpan=${validMaterialsCount} class=''>
+                                            <label>${item.item_name || 'N/A'}</label>
+                                            </br>
+                                            <label>${item.name || ''}</label>
+                                        </td>` : ''}
+                            
+                                        <td>${material.name || ''}</td>
+                                        <td>${material.unit_of_measure || ''}</td>
+                                        <td>${material.qty || ''}</td>
+                                        <td>${material.price || ''}</td>
+                                        <td class='align-content-center'> <div class='d-flex'>${total || ''}</div></td>
+                            
+                                        ${index === 0 ? `<td rowSpan=${validMaterialsCount} class='align-content-center'>
+                                            <div class='d-flex'>
+                                                ${item.total}
+                                            </div>
+                                        </td>` : ''}
+                                    </tr>
+                                `;
+                        }
+                    });
 
                 }
                 lastTotal += finalTotal
@@ -970,8 +903,7 @@ item.material.forEach((material, index) => {
             '--use-gl=swiftshader',
             '--window-size=1920,1080',
         ];
-        try {
-            console.log("Launching browser...");
+        try { 
             const browser = await puppeteer.launch({
                 args,
                 headless: true,
@@ -986,34 +918,31 @@ item.material.forEach((material, index) => {
             });
 
             const page = await browser.newPage();
-             
-            const loaded = page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 0 });
 
+            const loaded = page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 0 });
+              
             await page.setContent(html);
-            await loaded; 
+            await loaded;
             const pdf = await page.pdf({
                 format: 'A4',
-                printBackground: true, // Optional: print background styles
+                printBackground: true,  
             });
- 
-            await browser.close();
 
-            // Send PDF as a response
-
-            // Send the base64-encoded PDF 
+            await browser.close(); 
             const pdfData = Buffer.from(pdf, "binary")
 
             return ({
                 status: true,
                 message: "Pdf generated successfully.",
-                data: pdfData
+                data: pdfData,
+                name: existCustomer.name
             });
 
         } catch (error) {
             console.error("Error generating PDF:", error);
             res.status(500).send("Internal Server Error");
         }
- 
+
         return ({
             status: true,
             message: "Pdf generated successfully.",
@@ -1028,9 +957,7 @@ item.material.forEach((material, index) => {
         });
     }
 };
-
-
-
+ 
 module.exports = {
     createEstimate,
     getEstimate,
@@ -1038,5 +965,4 @@ module.exports = {
     updateEstimate,
     generatePdf
 }
- 
- 
+
