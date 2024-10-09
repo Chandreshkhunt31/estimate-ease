@@ -3,6 +3,7 @@ const QuotationDetail = require('../models').QuotationDetail;
 const QuotationItem = require('../models').QuotationItem;
 const QuotationMaterial = require('../models').QuotationMaterial;
 const MerchantSubProduct = require('../models').MerchantSubProduct; 
+const QuotationImage = require('../models').QuotationImage; 
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
 const User = require('../models').User;
@@ -11,9 +12,12 @@ const fs = require('fs');
 const path = require('path'); 
 const { Sequelize } = require('sequelize');
 
-const createEstimate = async (body) => {
+const createEstimate = async ({ body, files, storageType}) => {
     try {
         let { name, address, contact_no, quote_by, created_by, quote_number, quotationItems, merchant_id, sales_rep } = body
+
+        console.log(body);
+        
 
         const customerData = { name, address, contact_no, merchant_id }
         const newCustomer = await addCustomer(customerData)
@@ -62,6 +66,12 @@ const createEstimate = async (body) => {
                         data: {}
                     });
                 }
+                const imagePromises = files.map(async (file) => {
+                    return await QuotationImage.create({
+                        quote_item_id: newQuotationItem.data.id,
+                        image_url: storageType === 's3' ? file.location : `/uploads/${file.filename}`
+                    });
+                });  
                 let materialData = item.material
                 materialData.map(async (item) => { 
                     if (item.qty != 0) { 
@@ -401,6 +411,9 @@ const getEstimate = async (data) => {
                         ]
                     }]
                 });
+
+                const quotationImagesData = await getQuotationImages({ quote_item_id: quotationItem.id }); 
+  
                 const finalTable = merchantSubProductsData.map((merchantSubProducts) => {
                     let matchedQuotationMaterial = null;
 
@@ -458,14 +471,15 @@ const getEstimate = async (data) => {
                     return data
 
                 }));
-
+  
                 const data = {
                     id: quotationItem.id,
                     name: quotationItem.item_name,
                     total: subProductData.reduce((sum, item) => sum + item.amount, 0),
                     item_name: quotationItem.name,
                     product_id: quotationItem.product_id,
-                    subProduct: subProductData
+                    subProduct: subProductData,
+                    images : (quotationImagesData.data.length != 0) ?  quotationImagesData.data : []
                 }
                 return data
             }));
@@ -648,6 +662,37 @@ const getQuotationMaterial = async (data) => {
             status: true,
             message: "Quotation Material data retrieved successfully.",
             data: quotationMaterialData
+        };
+    } catch (error) {
+        console.error(error);
+        return ({
+            status: false,
+            message: "An error occurred. Please try again.",
+            error: error.message
+        });
+    }
+};
+const getQuotationImages = async (data) => {
+    try {
+        const { quote_item_id } = data;
+
+        const queryCondition = { where: { quote_item_id } }
+        const quotationImagesData = await QuotationImage.findAll({
+            ...queryCondition 
+        });
+ 
+        if (!quotationImagesData || quotationImagesData.length === 0) {
+            return {
+                status: false,
+                message: "No quotation item data found for the provided quote ID.",
+                data: []
+            };
+        }
+
+        return {
+            status: true,
+            message: "Quotation Images data retrieved successfully.",
+            data: quotationImagesData
         };
     } catch (error) {
         console.error(error);

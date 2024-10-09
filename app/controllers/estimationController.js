@@ -3,16 +3,60 @@ const QuotationItem = require('../models').QuotationItem;
 const QuotationMaterial = require('../models').QuotationMaterial;
 const QuotationDetail = require('../models').QuotationDetail;
 const Customer = require('../models').Customer;
+const uploadImage = require('../helper/uploads')
 
 const addEstimate = async (req, res) => {
+    const storageType = req.query.storage || 'local'; // Use 's3' or 'local'
+
+    const upload = uploadImage(storageType);
+
+    upload(req, res, async (err) => {
+        try {
+            let body = req.body
+ 
+            const files = req.files
+
+            body.quotationItems = JSON.parse(body.quotationItems)
+
+            const user_id = req.id
+
+            body.created_by = user_id
+
+            const newEstimate = await Estimate.createEstimate({ body, files, storageType}) 
+            if (!newEstimate.status) {
+                return res.status(400).json({
+                    status: false,
+                    message: newEstimate.message,
+                    data: {}
+                });
+            }
+            return res.status(201).json({
+                status: true,
+                message: "Estimate added successfully.",
+                data: "newEstimate.data"
+            });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({
+                status: false,
+                message: "An error occurred. Please try again.",
+                error: error.message
+            });
+        }
+    })
+};
+
+const editEstimate = async (req, res) => {
     try {
-        let body = req.body 
-        
+        let body = req.body
+
+        const { user_customer_id } = req.query
+
         const user_id = req.id
- 
+
         body.created_by = user_id
- 
-        const newEstimate = await Estimate.createEstimate(body) 
+
+        const newEstimate = await Estimate.updateEstimate({ body, user_customer_id })
         if (!newEstimate.status) {
             return res.status(400).json({
                 status: false,
@@ -20,39 +64,6 @@ const addEstimate = async (req, res) => {
                 data: {}
             });
         }
-        return res.status(201).json({
-            status: true,
-            message: "Estimate added successfully.",
-            data: newEstimate.data
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            status: false,
-            message: "An error occurred. Please try again.",
-            error: error.message
-        });
-    }
-};
-
-const editEstimate = async (req, res) => {
-    try {
-        let body = req.body   
-         
-        const { user_customer_id } = req.query
- 
-        const user_id = req.id
- 
-        body.created_by = user_id
- 
-        const newEstimate = await Estimate.updateEstimate({ body, user_customer_id }) 
-        if (!newEstimate.status) {
-            return res.status(400).json({
-                status: false,
-                message: newEstimate.message,
-                data: {}
-            });
-        } 
 
         return res.status(201).json({
             status: true,
@@ -70,19 +81,19 @@ const editEstimate = async (req, res) => {
 };
 
 const deleteQuotationItem = async (req, res) => {
-    try { 
-        const { quotation_item_id  } = req.query
+    try {
+        const { quotation_item_id } = req.query
 
         await QuotationMaterial.destroy({ where: { quote_item_id: quotation_item_id } })
-  
-        const deleteQuotationItem = await QuotationItem.destroy({ where: { id: quotation_item_id } }) 
+
+        const deleteQuotationItem = await QuotationItem.destroy({ where: { id: quotation_item_id } })
         if (!deleteQuotationItem) {
             return res.status(400).json({
                 status: false,
                 message: "QuotationItem not found",
                 data: {}
             });
-        } 
+        }
 
         return res.status(201).json({
             status: true,
@@ -101,27 +112,27 @@ const deleteQuotationItem = async (req, res) => {
 
 const deleteEstimate = async (req, res) => {
     try {
-        const { customer_id } = req.query;  
-   
-        const existingCustomer = await QuotationDetail.findOne({ where: { customer_id  : customer_id} });
-       
+        const { customer_id } = req.query;
+
+        const existingCustomer = await QuotationDetail.findOne({ where: { customer_id: customer_id } });
+
         if (!existingCustomer) {
             return res.status(404).json({
                 status: false,
                 message: "Customer not found.",
                 data: {}
-            }); 
+            });
         }
-  
-        const existQuotationItem = await QuotationItem.findAll({ where: { quote_id: existingCustomer.id } }); 
-        if (existQuotationItem.length != 0 ) {
+
+        const existQuotationItem = await QuotationItem.findAll({ where: { quote_id: existingCustomer.id } });
+        if (existQuotationItem.length != 0) {
             for (let i = 0; i < existQuotationItem.length; i++) {
                 const element = existQuotationItem[i];
-    
+
                 await QuotationMaterial.destroy({ where: { quote_item_id: element.id } });
-    
+
                 const deleteQuotationItem = await QuotationItem.destroy({ where: { id: element.id } });
-    
+
                 if (deleteQuotationItem === 0) {
                     return res.status(404).json({
                         status: false,
@@ -129,32 +140,32 @@ const deleteEstimate = async (req, res) => {
                         data: {}
                     });
                 }
-            } 
-        } 
-           
+            }
+        }
+
         const deleteQuotationResult = await QuotationDetail.destroy({ where: { customer_id } });
-  
-        if (!deleteQuotationResult) { 
+
+        if (!deleteQuotationResult) {
             return res.status(404).json({
                 status: false,
                 message: "Quotation detail not found or deleted.",
                 data: {}
             });
         }
-         
-        const deleteCustomerResult =  await Customer.destroy({ where: { id: customer_id } }); 
-        if (!deleteCustomerResult) { 
+
+        const deleteCustomerResult = await Customer.destroy({ where: { id: customer_id } });
+        if (!deleteCustomerResult) {
             return res.status(404).json({
                 status: false,
                 message: "customer not found or deleted.",
                 data: {}
             });
         }
-     
+
         return res.status(200).json({
             status: true,
             message: "Quotation item deleted successfully.",
-            data: "existQuotationItem" 
+            data: "existQuotationItem"
         });
     } catch (error) {
         console.error(error);
@@ -164,14 +175,14 @@ const deleteEstimate = async (req, res) => {
             error: error.message
         });
     }
-    
+
 };
 
 const getEstimate = async (req, res) => {
     try {
-        let { user_customer_id, merchant_product_id } = req.query   
-         
-        const estimateData = await Estimate.getEstimate({user_customer_id, merchant_product_id}) 
+        let { user_customer_id, merchant_product_id } = req.query
+
+        const estimateData = await Estimate.getEstimate({ user_customer_id, merchant_product_id })
         if (!estimateData.status) {
             return res.status(400).json({
                 status: false,
@@ -183,7 +194,7 @@ const getEstimate = async (req, res) => {
         return res.status(201).json({
             status: true,
             message: "Estimate List.",
-            data:  estimateData.data 
+            data: estimateData.data
         });
     } catch (error) {
         console.error(error);
@@ -197,9 +208,9 @@ const getEstimate = async (req, res) => {
 
 const getEstimateCustomerList = async (req, res) => {
     try {
-        let { merchant_id } = req.query  
+        let { merchant_id } = req.query
 
-        const estimateData = await Estimate.getEstimateCustomerList({merchant_id}) 
+        const estimateData = await Estimate.getEstimateCustomerList({ merchant_id })
         if (!estimateData.status) {
             return res.status(400).json({
                 status: false,
@@ -211,7 +222,7 @@ const getEstimateCustomerList = async (req, res) => {
         return res.status(201).json({
             status: true,
             message: "Estimate customer list.",
-            data:  estimateData.data 
+            data: estimateData.data
         });
     } catch (error) {
         console.error(error);
@@ -224,21 +235,21 @@ const getEstimateCustomerList = async (req, res) => {
 };
 const generatePdf = async (req, res) => {
     try {
-        let { user_customer_id } = req.query  
+        let { user_customer_id } = req.query
         const user_id = req.id
 
-        const pdfData = await Estimate.generatePdf({user_customer_id, user_id})  
-        const fileName = pdfData.name +".pdf"
-        console.log(fileName); 
-        const customFileName = 'hello.pdf'; 
+        const pdfData = await Estimate.generatePdf({ user_customer_id, user_id })
+        const fileName = pdfData.name + ".pdf"
+        console.log(fileName);
+        const customFileName = 'hello.pdf';
         console.log(customFileName);
-        
+
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
         res.send(pdfData.data);
-        
-         
+
+
     } catch (error) {
         console.error(error);
         return res.status(500).json({
@@ -249,15 +260,12 @@ const generatePdf = async (req, res) => {
     }
 };
 
-
-
-
-module.exports ={
+module.exports = {
     addEstimate,
     getEstimate,
     getEstimateCustomerList,
     editEstimate,
     deleteQuotationItem,
     deleteEstimate,
-    generatePdf
+    generatePdf, 
 }
