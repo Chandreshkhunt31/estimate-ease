@@ -1,7 +1,9 @@
 const Estimate = require("../services/estimateService")
+const QuotationImages = require("../services/quoteImageService")
 const QuotationItem = require('../models').QuotationItem;
 const QuotationMaterial = require('../models').QuotationMaterial;
 const QuotationDetail = require('../models').QuotationDetail;
+const QuotationImage = require('../models').QuotationImage;
 const Customer = require('../models').Customer;
 const uploadImage = require('../helper/uploads')
 
@@ -14,7 +16,10 @@ const addEstimate = async (req, res) => {
         try {
             let body = req.body
  
-            const files = req.files
+            const files = req.files 
+
+            console.log(req.files);
+            
 
             body.quotationItems = JSON.parse(body.quotationItems)
 
@@ -98,7 +103,7 @@ const deleteQuotationItem = async (req, res) => {
         return res.status(201).json({
             status: true,
             message: "QuotationItem deleted successfully.",
-            data: deleteQuotationItem.data
+            data: "deleteQuotationItem.data"
         });
     } catch (error) {
         console.error(error);
@@ -128,8 +133,11 @@ const deleteEstimate = async (req, res) => {
         if (existQuotationItem.length != 0) {
             for (let i = 0; i < existQuotationItem.length; i++) {
                 const element = existQuotationItem[i];
+ 
 
                 await QuotationMaterial.destroy({ where: { quote_item_id: element.id } });
+                    // const deleteQuotationImages = await QuotationImage.destroy({ where: { quote_item_id: quotation_item_id } })
+                const deleteQuotationImages = await QuotationImages.deleteQuotationImages(element.id)
 
                 const deleteQuotationItem = await QuotationItem.destroy({ where: { id: element.id } });
 

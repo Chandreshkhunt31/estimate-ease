@@ -3,7 +3,7 @@ const QuotationDetail = require('../models').QuotationDetail;
 const QuotationItem = require('../models').QuotationItem;
 const QuotationMaterial = require('../models').QuotationMaterial;
 const MerchantSubProduct = require('../models').MerchantSubProduct; 
-const QuotationImage = require('../models').QuotationImage; 
+const QuotationImage = require('./quoteImageService'); 
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
 const User = require('../models').User;
@@ -49,7 +49,7 @@ const createEstimate = async ({ body, files, storageType}) => {
             });
         }
 
-        quotationItems.map(async (item) => {
+        quotationItems.map(async (item, i) => {
             if (item.total != 0) {
                 const quotationItemData = {
                     quote_id: newQuotationDetail.data.id,
@@ -66,12 +66,32 @@ const createEstimate = async ({ body, files, storageType}) => {
                         data: {}
                     });
                 }
-                const imagePromises = files.map(async (file) => {
-                    return await QuotationImage.create({
-                        quote_item_id: newQuotationItem.data.id,
-                        image_url: storageType === 's3' ? file.location : `/uploads/${file.filename}`
-                    });
+                
+                files.map(async (file) => {
+                    const str = file.filename;
+
+                    const parts = str.split('-'); 
+                    
+                    const name = parts[0] ;
+                    const io = Number(parts[1].trim()); 
+                    console.log(item.name == name);
+                    console.log(item.name, "item.name");
+                    console.log(name, "name");
+
+                    if (item.name == name) {
+                        console.log(i == io);
+                        console.log(io, "io");
+                        console.log(i, "i");
+
+                        if (i == io) { 
+                            return await QuotationImage.addQuotationImages({
+                                quote_item_id: newQuotationItem.data.id,
+                                image_url: storageType === 's3' ? file.location : `/uploads/${file.filename}`
+                            });
+                        }
+                    }
                 });  
+
                 let materialData = item.material
                 materialData.map(async (item) => { 
                     if (item.qty != 0) { 
@@ -412,7 +432,7 @@ const getEstimate = async (data) => {
                     }]
                 });
 
-                const quotationImagesData = await getQuotationImages({ quote_item_id: quotationItem.id }); 
+                const quotationImagesData = await QuotationImage.getQuotationImages({ quote_item_id: quotationItem.id }); 
   
                 const finalTable = merchantSubProductsData.map((merchantSubProducts) => {
                     let matchedQuotationMaterial = null;
@@ -672,37 +692,7 @@ const getQuotationMaterial = async (data) => {
         });
     }
 };
-const getQuotationImages = async (data) => {
-    try {
-        const { quote_item_id } = data;
 
-        const queryCondition = { where: { quote_item_id } }
-        const quotationImagesData = await QuotationImage.findAll({
-            ...queryCondition 
-        });
- 
-        if (!quotationImagesData || quotationImagesData.length === 0) {
-            return {
-                status: false,
-                message: "No quotation item data found for the provided quote ID.",
-                data: []
-            };
-        }
-
-        return {
-            status: true,
-            message: "Quotation Images data retrieved successfully.",
-            data: quotationImagesData
-        };
-    } catch (error) {
-        console.error(error);
-        return ({
-            status: false,
-            message: "An error occurred. Please try again.",
-            error: error.message
-        });
-    }
-};
 
 const updateEstimate = async ({ body, user_customer_id }) => {
     try {

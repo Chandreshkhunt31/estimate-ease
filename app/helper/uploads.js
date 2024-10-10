@@ -16,7 +16,7 @@ const s3 = new aws.S3();
 // Multer setup for local disk storage
 const localStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const dir = './uploads';
+        const dir = './public/uploads';
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
@@ -33,7 +33,7 @@ const s3Storage = multerS3({
     bucket: process.env.AWS_BUCKET_NAME, 
     acl: 'public-read',
     key: (req, file, cb) => {
-        cb(null, `uploads/${Date.now()}_${path.basename(file.originalname)}`);
+        cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
     }
 });
 
@@ -59,7 +59,18 @@ const uploadImage = (storageType) => {
         fileFilter: (req, file, cb) => {
             checkFileType(file, cb);
         }
-    }).array('images', 10); // Accept up to 10 images
+    }).any();  
 };
 
 module.exports = uploadImage;
+
+
+
+{/* <div className='d-flex justify-content-center'>
+                                  <img
+                                    src={image.image_url}
+                                    // src={"/uploads/images-1728537948296.jpg"}
+                                    alt="image"
+                                    style={{ maxWidth: '80px', height: 'auto', margin: "5px" }}
+                                  />
+                                </div> */}
