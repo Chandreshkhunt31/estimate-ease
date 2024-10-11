@@ -1,11 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-const { userSignupValidationRules, loginValidationRules, validate } = require('../validators/userValidator');
-const { customerValidation } = require('../validators/customerValidator');
+const { userSignupValidationRules, loginValidationRules, validate } = require('../validators/userValidator'); 
 const { authenticateUserJWT } = require('../middlewares/authenticateUserJWT')
-const { merchantSubProductValidation } = require('../validators/merchantSubProductValidator');
-const { validateQuotation } = require('../validators/estimateValidator');
+const { merchantSubProductValidation } = require('../validators/merchantSubProductValidator'); 
 
 const userAuthController = require('../controllers/userAuthController');
 router.post('/signup', userSignupValidationRules(), validate, userAuthController.signup);

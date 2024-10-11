@@ -6,6 +6,7 @@ const QuotationDetail = require('../models').QuotationDetail;
 const QuotationImage = require('../models').QuotationImage;
 const Customer = require('../models').Customer;
 const uploadImage = require('../helper/uploads')
+const { body, validationResult } = require('express-validator');
 
 const addEstimate = async (req, res) => {
     const storageType = req.query.storage || 'local'; // Use 's3' or 'local'
@@ -20,6 +21,43 @@ const addEstimate = async (req, res) => {
                 error: err.message
             });
         }  
+
+        await body('name')
+            .notEmpty().withMessage('Name is required')
+            .isString().withMessage('Name must be a string')
+            .run(req);
+
+        await body('address')
+            .notEmpty().withMessage('Address is required')
+            .isString().withMessage('Address must be a string')
+            .run(req);
+
+        await body('contact_no')
+            .notEmpty().withMessage('Contact number is required')
+            .isMobilePhone().withMessage('Contact number must be a valid phone number')
+            .run(req);
+
+        await body('quote_by')
+            .notEmpty().withMessage('Quote By is required')
+            .isString().withMessage('Quote By must be a string')
+            .run(req);
+
+        await body('quotationItems')
+            .notEmpty().withMessage('Quotation items are required')
+            .isString().withMessage('Quotation items must be an array')
+            .run(req);
+
+        await body('sales_rep')
+            .optional()
+            .isString().withMessage('Sales Rep must be a string if provided')
+            .run(req);
+ 
+        const errors = validationResult(req);
+ 
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+  
         try {
             let body = req.body;
             const files = req.files;
@@ -69,6 +107,43 @@ const editEstimate = async (req, res) => {
     const upload = uploadImage(storageType);
 
     upload(req, res, async (err) => {
+        
+        await body('name')
+            .notEmpty().withMessage('Name is required')
+            .isString().withMessage('Name must be a string')
+            .run(req);
+
+        await body('address')
+            .notEmpty().withMessage('Address is required')
+            .isString().withMessage('Address must be a string')
+            .run(req);
+
+        await body('contact_no')
+            .notEmpty().withMessage('Contact number is required')
+            .isMobilePhone().withMessage('Contact number must be a valid phone number')
+            .run(req);
+
+        await body('quote_by')
+            .notEmpty().withMessage('Quote By is required')
+            .isString().withMessage('Quote By must be a string')
+            .run(req);
+
+        await body('quotationItems')
+            .notEmpty().withMessage('Quotation items are required')
+            .isString().withMessage('Quotation items must be an array')
+            .run(req);
+
+        await body('sales_rep')
+            .optional()
+            .isString().withMessage('Sales Rep must be a string if provided')
+            .run(req);
+ 
+        const errors = validationResult(req);
+ 
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+ 
         try {
             let body = req.body
 
