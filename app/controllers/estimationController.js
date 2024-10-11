@@ -13,21 +13,31 @@ const addEstimate = async (req, res) => {
     const upload = uploadImage(storageType);
 
     upload(req, res, async (err) => {
+        if (err) {
+            return res.status(400).json({
+                status: false,
+                message: "Image upload failed. Please try again.",
+                error: err.message
+            });
+        }  
         try {
-            let body = req.body
+            let body = req.body;
+            const files = req.files;
  
-            const files = req.files 
+            if (body.quotationItems) {
+                body.quotationItems = JSON.parse(body.quotationItems);
+            } else {
+                return res.status(400).json({
+                    status: false,
+                    message: "Quotation items are required.",
+                    data: {}
+                });
+            }
 
-            console.log(req.files);
-            
+            const user_id = req.id;
+            body.created_by = user_id;
 
-            body.quotationItems = JSON.parse(body.quotationItems)
-
-            const user_id = req.id
-
-            body.created_by = user_id
-
-            const newEstimate = await Estimate.createEstimate({ body, files, storageType}) 
+            const newEstimate = await Estimate.createEstimate({ body, files, storageType });
             if (!newEstimate.status) {
                 return res.status(400).json({
                     status: false,
@@ -38,7 +48,7 @@ const addEstimate = async (req, res) => {
             return res.status(201).json({
                 status: true,
                 message: "Estimate added successfully.",
-                data: "newEstimate.data"
+                data: newEstimate.data  
             });
         } catch (error) {
             console.error(error);
@@ -48,32 +58,69 @@ const addEstimate = async (req, res) => {
                 error: error.message
             });
         }
-    })
+    });
 };
 
 const editEstimate = async (req, res) => {
+    const storageType = req.query.storage || 'local';
+ 
+    const { user_customer_id } = req.query
+
+    const upload = uploadImage(storageType);
+
+    upload(req, res, async (err) => {
+        try {
+            let body = req.body
+
+            const files = req.files
+ 
+            const user_id = req.id
+            body.quotationItems = JSON.parse(body.quotationItems)
+
+            body.created_by = user_id
+
+            const newEstimate = await Estimate.updateEstimate({ body, user_customer_id, files, storageType })
+            if (!newEstimate.status) {
+                return res.status(400).json({
+                    status: false,
+                    message: newEstimate.message,
+                    data: {}
+                });
+            }
+
+            return res.status(201).json({
+                status: true,
+                message: "Estimate updated successfully.",
+                data: newEstimate.data
+            });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({
+                status: false,
+                message: "An error occurred. Please try again.",
+                error: error.message
+            });
+        }
+    }) 
+};
+
+const deleteQuotationImage = async (req, res) => {
     try {
-        let body = req.body
-
-        const { user_customer_id } = req.query
-
-        const user_id = req.id
-
-        body.created_by = user_id
-
-        const newEstimate = await Estimate.updateEstimate({ body, user_customer_id })
-        if (!newEstimate.status) {
+        const { quotation_image_id } = req.query
+ 
+        const deleteQuotationImage = await QuotationImages.deleteQuotationImage(quotation_image_id)
+        if (!deleteQuotationImage) {
             return res.status(400).json({
                 status: false,
-                message: newEstimate.message,
+                message: "QuotationItem not found",
                 data: {}
             });
         }
 
         return res.status(201).json({
             status: true,
-            message: "Estimate updated successfully.",
-            data: newEstimate.data
+            message: "QuotationItem deleted successfully.",
+            data: {}
         });
     } catch (error) {
         console.error(error);
@@ -84,7 +131,6 @@ const editEstimate = async (req, res) => {
         });
     }
 };
-
 const deleteQuotationItem = async (req, res) => {
     try {
         const { quotation_item_id } = req.query
@@ -275,5 +321,6 @@ module.exports = {
     editEstimate,
     deleteQuotationItem,
     deleteEstimate,
-    generatePdf, 
+    generatePdf,
+    deleteQuotationImage
 }

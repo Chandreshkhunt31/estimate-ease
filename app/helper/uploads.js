@@ -55,7 +55,7 @@ const uploadImage = (storageType) => {
     const storage = storageType === 's3' ? s3Storage : localStorage;
     return multer({
         storage: storage,
-        limits: { fileSize: 1000000000 }, // 1GB size limit
+        limits: { fileSize: 1000000 }, // 1GB size limit
         fileFilter: (req, file, cb) => {
             checkFileType(file, cb);
         }

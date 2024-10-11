@@ -32,9 +32,10 @@ router.get("/unit/list", authenticateUserJWT, unitController.getUnitList);
 const estimateController = require('../controllers/estimationController')
 
 router.post('/estimate/add', authenticateUserJWT, estimateController.addEstimate);
-router.put('/estimate/edit', validateQuotation(), validate, authenticateUserJWT, estimateController.editEstimate);
+router.put('/estimate/edit', authenticateUserJWT, estimateController.editEstimate);
 router.delete('/estimate/delete', authenticateUserJWT, estimateController.deleteEstimate);
 router.delete('/quotation-item/delete', authenticateUserJWT, estimateController.deleteQuotationItem);
+router.delete('/quotation-image/delete', authenticateUserJWT, estimateController.deleteQuotationImage);
 router.get('/estimate/get', authenticateUserJWT, estimateController.getEstimate);
 router.get('/estimate/customer/list', authenticateUserJWT, estimateController.getEstimateCustomerList);
 router.get('/generate/pdf', authenticateUserJWT, estimateController.generatePdf); 

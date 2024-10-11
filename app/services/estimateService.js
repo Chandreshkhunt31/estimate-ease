@@ -694,7 +694,7 @@ const getQuotationMaterial = async (data) => {
 };
 
 
-const updateEstimate = async ({ body, user_customer_id }) => {
+const updateEstimate = async ({ body, user_customer_id, files, storageType }) => {
     try {
         let { name, address, quote_by, created_by, contact_no, quote_number, quotationItems, merchant_id, sales_rep } = body
 
@@ -721,7 +721,7 @@ const updateEstimate = async ({ body, user_customer_id }) => {
             });
         } 
 
-        quotationItems.map(async (item) => { 
+        quotationItems.map(async (item, i) => { 
             if (item.total != 0) { 
                 const quotationItemData = {
                     quote_id: newQuotationDetail.data.id,
@@ -740,6 +740,30 @@ const updateEstimate = async ({ body, user_customer_id }) => {
                     });
                 }
                 let materialData = item.material
+                files.map(async (file) => {
+                    const str = file.filename;
+
+                    const parts = str.split('-'); 
+                    
+                    const name = parts[0] ;
+                    const io = Number(parts[1].trim()); 
+                    console.log(item.name == name);
+                    console.log(item.name, "item.name");
+                    console.log(name, "name");
+
+                    if (item.name == name) {
+                        console.log(i == io);
+                        console.log(io, "io");
+                        console.log(i, "i");
+
+                        if (i == io) { 
+                            return await QuotationImage.addQuotationImages({
+                                quote_item_id: newQuotationItem.data.id,
+                                image_url: storageType === 's3' ? file.location : `/uploads/${file.filename}`
+                            });
+                        }
+                    }
+                });  
                 materialData.map(async (item) => { 
                     if (item.qty != 0) {
                         let quotationMaterialData = {
@@ -828,8 +852,9 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
         "quote_by": existQuotationDetail.quote_by,
         "merchant_id": estimateData.data.customer.merchant_id,
         "quote_number": estimateData.data.quotation.quotationDetail.quote_number,
-        "quotationItems": newData
+        "quotationItems": newData, 
     }
+ 
 
     const { name, address, contact_no, quote_by, salesContact, quote_number, sales_rep, date, quotationItems } = finalData
 
@@ -856,41 +881,96 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
                 let materialsHtml = '';
                 let finalTotal = 0;
 
-                if (Array.isArray(item.material)) {
-                   
-                    let validMaterials = item.material.filter(material => material.qty);
-                    let validMaterialsCount = validMaterials.length;
 
-                    item.material.forEach((material, index) => {
-                        if (material.qty) {
-                            let total = material.price * material.qty;
-                            finalTotal += total;
+ 
+        //         if (Array.isArray(item.material)) {
+        //             let validMaterials = item.material.filter(material => material.qty);
+        //             let validMaterialsCount = validMaterials.length;
 
-                            materialsHtml += `
-                                    <tr>
-                                        ${index === 0 ? `<td rowSpan=${validMaterialsCount} class=''>
-                                            <label>${item.item_name || 'N/A'}</label>
-                                            </br>
-                                            <label>${item.name || ''}</label>
-                                        </td>` : ''}
-                            
-                                        <td>${material.name || ''}</td>
-                                        <td>${material.unit_of_measure || ''}</td>
-                                        <td>${material.qty || ''}</td>
-                                        <td>${material.price || ''}</td>
-                                        <td class='align-content-center'> <div class='d-flex'>${total || ''}</div></td>
-                            
-                                        ${index === 0 ? `<td rowSpan=${validMaterialsCount} class='align-content-center'>
-                                            <div class='d-flex'>
-                                                ${item.total}
-                                            </div>
-                                        </td>` : ''}
-                                    </tr>
-                                `;
-                        }
-                    });
-
+        //             let imagesHtml = '';
+        //             if (Array.isArray(item.images)) {
+        //                 imagesHtml = item.images.map((image, i) => `
+        //     <img src="http://localhost:5000${image.image_url}" alt="Image ${i + 1}" style="width: 50px; height: 50px; margin-right: 5px;">
+        // `).join('');
+        //             }
+                
+        //             item.material.forEach((material, index) => {
+                        
+        //                 if (material.qty) {
+        //                     let total = material.price * material.qty;
+        //                     finalTotal += total;
+                
+        //                     materialsHtml += `
+        //                         <tr>
+        //                             ${index === 0 ? `<td rowSpan=${validMaterialsCount} class=''>
+        //                                  ${imagesHtml}
+        //                                 <label>${item.item_name || 'N/A'}</label>
+        //                                 </br>
+        //                                 <label>${item.name || ''}</label>
+        //                             </td>` : ''}
+        //                             <td>${material.name || ''}</td>
+        //                             <td>${material.unit_of_measure || ''}</td>
+        //                             <td>${material.qty || ''}</td>
+        //                             <td>${material.price || ''}</td>
+        //                             <td class='align-content-center'>
+        //                                 <div class='d-flex'>${total || ''}</div>
+        //                             </td>
+        //                             ${index === 0 ? `<td rowSpan=${validMaterialsCount} class='align-content-center'>
+        //                                 <div class='d-flex'>
+        //                                     ${item.total}
+        //                                 </div>
+        //                             </td>` : ''}
+        //                         </tr>
+        //                     `;
+        //                 }
+        //             });
+        //         }
+        if (Array.isArray(item.material)) {
+            let validMaterials = item.material.filter(material => material.qty);
+            let validMaterialsCount = validMaterials.length;
+        
+            // Create an image HTML string by looping through item.images
+            let imagesHtml = '';
+            if (Array.isArray(item.images)) {
+                imagesHtml = item.images.map((image, i) => `
+                    <img src="http://localhost:5000${image.image_url}" alt="Image ${i + 1}" style="width: 80px; margin: 5px;">
+                `).join('');
+            }
+        
+            item.material.forEach((material, index) => {
+                if (material.qty) {
+                    let total = material.price * material.qty;
+                    finalTotal += total;
+        
+                    materialsHtml += `
+                        <tr>
+                            ${index === 0 ? `<td rowSpan=${validMaterialsCount} class=''>
+                            <div class=""> 
+                                <label>${item.item_name || 'N/A'}</label>
+                                </br>
+                                <label>${item.name || ''}</label>
+                                </br>
+                            ${imagesHtml}
+                            </div>
+                            </td>` : ''}
+                            <td>${material.name || ''}</td>
+                            <td>${material.unit_of_measure || ''}</td>
+                            <td>${material.qty || ''}</td>
+                            <td>${material.price || ''}</td>
+                            <td class='align-content-center'>
+                                <div class='d-flex'>${total || ''}</div>
+                            </td>
+                            ${index === 0 ? `<td rowSpan=${validMaterialsCount} class='align-content-center'>
+                                <div class='d-flex'>
+                                    ${item.total}
+                                </div>
+                            </td>` : ''}
+                        </tr>
+                    `;
                 }
+            });
+        }
+        
                 lastTotal += finalTotal
 
                 itemsHtml += `
@@ -911,6 +991,10 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
 
 
         html = html.replace('{{#quotationItems}}', itemsHtml);
+
+
+        console.log(html);
+        
 
 
 
