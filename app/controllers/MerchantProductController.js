@@ -47,8 +47,9 @@ const addMerchantProduct = async (req, res) => {
 const updateMerchantProduct = async (req, res) => {
     try {
         const { merchant_product_id } = req.query;
-        const updateData = req.body; 
+        const { merchant_id, product_id } = req.body;
 
+        const updateData = { merchant_id, product_id }; 
 
         if (!merchant_product_id) {
             return res.status(400).json({
@@ -95,7 +96,7 @@ const getMerchantProductList = async (req, res) => {
     try {
         const { merchant_id } = req.query;
         
-        const queryCondition = merchant_id ? { where: { merchant_id } } : {};
+        const queryCondition = { where: { merchant_id } };
 
         const merchantProductList = await MerchantProduct.findAll({
             ...queryCondition,

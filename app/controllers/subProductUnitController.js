@@ -39,47 +39,6 @@ const addSubProductUnit = async (req, res) => {
     }
 };
 
-
-
-const updateSubProductUnit = async (req, res) => {
-    try {
-        const { unit_id } = req.query;
-        const body = req.body;
-
-        const existingSubProductUnit = await SubProductUnit.findByPk(unit_id);
-        if (!existingSubProductUnit) {
-            return res.status(404).json({
-                status: false,
-                message: "This Sub Product Unit does not exist. Please check SubProductUnit ID.",
-                data: {}
-            });
-        }
-
-        const [affectedRows] = await SubProductUnit.update(body, { where: { id: unit_id } });
-        if (affectedRows === 0) {
-            return res.status(400).json({
-                status: false,
-                message: "No changes were made to the Sub Product Unit data. Please check the provided information.",
-                data: {}
-            });
-        }
-
-        return res.status(200).json({
-            status: true,
-            message: "Sub Product Unit updated successfully.",
-            data: {}
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            status: false,
-            message: "An error occurred. Please try again.",
-            error: error.message
-        });
-    }
-};
-
-
 const getSubProductUnitList = async (req, res) => {
     try {
 
@@ -180,5 +139,4 @@ module.exports = {
     getSubProductUnitList,
     getSubProductUnit,
     deleteSubProductUnit,
-    updateSubProductUnit
 }

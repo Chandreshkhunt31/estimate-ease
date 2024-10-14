@@ -47,7 +47,8 @@ const addMerchant = async (req, res) => {
 const updateMerchant = async (req, res) => {
     try {
         const { merchant_id } = req.query;
-        const body = req.body;
+        const { name, business_category_id, address, city, state } = req.body;
+        const body = { name, business_category_id, address, city, state };
 
         if (!merchant_id) {
             return res.status(400).json({

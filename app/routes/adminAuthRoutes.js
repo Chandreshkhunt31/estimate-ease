@@ -60,8 +60,7 @@ router.delete("/merchant-sub-product/delete", authenticateAdminJWT, merchantSubP
 
 const subProductUnitController = require('../controllers/subProductUnitController')
 
-router.post('/sub-product-unit/add', authenticateAdminJWT, subProductUnitController.addSubProductUnit);
-router.put("/sub-product-unit/edit", authenticateAdminJWT, subProductUnitController.updateSubProductUnit);
+router.post('/sub-product-unit/add', authenticateAdminJWT, subProductUnitController.addSubProductUnit); 
 router.get("/sub-product-unit/list", authenticateAdminJWT, subProductUnitController.getSubProductUnitList);
 router.get("/sub-product-unit/get", authenticateAdminJWT, subProductUnitController.getSubProductUnit);
 router.delete("/sub-product-unit/delete", authenticateAdminJWT, subProductUnitController.deleteSubProductUnit);

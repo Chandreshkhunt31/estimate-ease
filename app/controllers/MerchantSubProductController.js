@@ -72,7 +72,9 @@ const addMerchantSubProduct = async (req, res) => {
 const updateMerchantSubProduct = async (req, res) => {
     try {
         const { merchant_sub_product_id } = req.query;
-        const updates = req.body;
+        let { name, price } = req.body;
+
+        const updates = {  name, price };
 
         if (!merchant_sub_product_id) {
             return res.status(400).json({

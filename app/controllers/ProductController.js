@@ -47,7 +47,9 @@ const addProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
         const { product_id } = req.query;
-        const updateData = req.body;
+        const { name, business_category_id } = req.body;
+
+        const updateData = { name, business_category_id };
 
         if (!product_id) {
             return res.status(400).json({
