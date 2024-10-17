@@ -2,22 +2,19 @@ const Customer = require('../models').Customer;
 const QuotationDetail = require('../models').QuotationDetail;
 const QuotationItem = require('../models').QuotationItem;
 const QuotationMaterial = require('../models').QuotationMaterial;
-const MerchantSubProduct = require('../models').MerchantSubProduct; 
-const QuotationImage = require('./quoteImageService'); 
+const MerchantSubProduct = require('../models').MerchantSubProduct;
+const QuotationImage = require('./quoteImageService');
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
 const User = require('../models').User;
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const path = require('path'); 
+const path = require('path');
 const { Sequelize } = require('sequelize');
 
-const createEstimate = async ({ body, files, storageType}) => {
+const createEstimate = async ({ body, files, storageType }) => {
     try {
         let { name, address, contact_no, quote_by, created_by, quote_number, quotationItems, merchant_id, sales_rep } = body
-
-        console.log(body);
-        
 
         const customerData = { name, address, contact_no, merchant_id }
         const newCustomer = await addCustomer(customerData)
@@ -30,15 +27,15 @@ const createEstimate = async ({ body, files, storageType}) => {
             });
         }
 
-        const customer_id = newCustomer.data.id 
+        const customer_id = newCustomer.data.id
         const existingQuotationNumber = await QuotationDetail.findOne({
             where: { merchant_id },
             order: [[Sequelize.cast(Sequelize.col('quote_number'), 'INTEGER'), 'DESC']],
             paranoid: false,
         });
- 
+
         quote_number = existingQuotationNumber ? parseInt(existingQuotationNumber.quote_number) + 1 : 1
-  
+
         const quotationDetailData = { quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep }
         const newQuotationDetail = await addQuotationDetail(quotationDetailData);
         if (!newQuotationDetail.status) {
@@ -66,35 +63,29 @@ const createEstimate = async ({ body, files, storageType}) => {
                         data: {}
                     });
                 }
-                
+
                 files.map(async (file) => {
                     const str = file.filename;
 
-                    const parts = str.split('-'); 
-                    
-                    const name = parts[0] ;
-                    const io = Number(parts[1].trim()); 
-                    console.log(item.name == name);
-                    console.log(item.name, "item.name");
-                    console.log(name, "name");
+                    const parts = str.split('-');
+
+                    const name = parts[0];
+                    const io = Number(parts[1].trim());
 
                     if (item.name == name) {
-                        console.log(i == io);
-                        console.log(io, "io");
-                        console.log(i, "i");
 
-                        if (i == io) { 
+                        if (i == io) {
                             return await QuotationImage.addQuotationImages({
                                 quote_item_id: newQuotationItem.data.id,
                                 image_url: storageType === 's3' ? file.location : `/uploads/${file.filename}`
                             });
                         }
                     }
-                });  
+                });
 
                 let materialData = item.material
-                materialData.map(async (item) => { 
-                    if (item.qty != 0) { 
+                materialData.map(async (item) => {
+                    if (item.qty != 0) {
                         let quotationMaterialData = {
                             material_id: item.material_id,
                             unit_of_measure: item.unit_of_measure,
@@ -133,7 +124,7 @@ const createEstimate = async ({ body, files, storageType}) => {
         });
     }
 };
- 
+
 const addCustomer = async (customerData) => {
     try {
         let { name, address, contact_no, merchant_id } = customerData;
@@ -286,7 +277,7 @@ const addQuotationItem = async (quotationItemData) => {
 const updateQuotationItem = async (quotationItemData) => {
     try {
         const { quote_id, item_name, name, product_id, id } = quotationItemData;
- 
+
         if (id != null) {
 
             const updateData = { quote_id, item_name, name, product_id }
@@ -415,7 +406,7 @@ const getEstimate = async (data) => {
             }
 
             const quotationItems = await Promise.all(quotationItemData.data.map(async (quotationItem) => {
-                const quotationMaterialData = await getQuotationMaterial({ quote_item_id: quotationItem.id }); 
+                const quotationMaterialData = await getQuotationMaterial({ quote_item_id: quotationItem.id });
                 const queryCondition = { where: { merchant_product_id: quotationItem.product_id } }
 
                 const merchantSubProductsData = await MerchantSubProduct.findAll({
@@ -432,8 +423,8 @@ const getEstimate = async (data) => {
                     }]
                 });
 
-                const quotationImagesData = await QuotationImage.getQuotationImages({ quote_item_id: quotationItem.id }); 
-  
+                const quotationImagesData = await QuotationImage.getQuotationImages({ quote_item_id: quotationItem.id });
+
                 const finalTable = merchantSubProductsData.map((merchantSubProducts) => {
                     let matchedQuotationMaterial = null;
 
@@ -452,10 +443,10 @@ const getEstimate = async (data) => {
                             name: merchantSubProducts.name,
                             merchant_product_id: merchantSubProducts.merchant_product_id,
                         }
-                    }; 
+                    };
                     return matchedQuotationMaterial ? matchedQuotationMaterial : data;
                 });
- 
+
                 if (!finalTable || finalTable.length === 0) {
                     return {
                         status: false,
@@ -491,7 +482,7 @@ const getEstimate = async (data) => {
                     return data
 
                 }));
-  
+
                 const data = {
                     id: quotationItem.id,
                     name: quotationItem.item_name,
@@ -499,7 +490,7 @@ const getEstimate = async (data) => {
                     item_name: quotationItem.name,
                     product_id: quotationItem.product_id,
                     subProduct: subProductData,
-                    images : (quotationImagesData.data.length != 0) ?  quotationImagesData.data : []
+                    images: (quotationImagesData.data.length != 0) ? quotationImagesData.data : []
                 }
                 return data
             }));
@@ -534,7 +525,7 @@ const getEstimateCustomerList = async (data) => {
 
         const customerData = await getCustomer({ merchant_id });
 
-        if (!customerData.status || customerData.length === 0) { 
+        if (!customerData.status || customerData.length === 0) {
             return {
                 status: false,
                 message: "No customers found",
@@ -669,7 +660,7 @@ const getQuotationMaterial = async (data) => {
             },
             ]
         });
- 
+
         if (!quotationMaterialData || quotationMaterialData.length === 0) {
             return {
                 status: false,
@@ -709,7 +700,7 @@ const updateEstimate = async ({ body, user_customer_id, files, storageType }) =>
             });
         }
 
-        const customer_id = user_customer_id 
+        const customer_id = user_customer_id
         const quotationDetailData = { quote_number, quote_by, created_by, customer_id, merchant_id, sales_rep }
 
         const newQuotationDetail = await updateQuotationDetail(quotationDetailData);
@@ -719,10 +710,10 @@ const updateEstimate = async ({ body, user_customer_id, files, storageType }) =>
                 message: newQuotationDetail.message,
                 data: {}
             });
-        } 
+        }
 
-        quotationItems.map(async (item, i) => { 
-            if (item.total != 0) { 
+        quotationItems.map(async (item, i) => {
+            if (item.total != 0) {
                 const quotationItemData = {
                     quote_id: newQuotationDetail.data.id,
                     name: item.item_name,
@@ -731,7 +722,7 @@ const updateEstimate = async ({ body, user_customer_id, files, storageType }) =>
                     product_id: item.product_id
                 }
 
-                const newQuotationItem = await updateQuotationItem(quotationItemData); 
+                const newQuotationItem = await updateQuotationItem(quotationItemData);
                 if (!newQuotationItem.status) {
                     return ({
                         status: false,
@@ -743,28 +734,23 @@ const updateEstimate = async ({ body, user_customer_id, files, storageType }) =>
                 files.map(async (file) => {
                     const str = file.filename;
 
-                    const parts = str.split('-'); 
-                    
-                    const name = parts[0] ;
-                    const io = Number(parts[1].trim()); 
-                    console.log(item.name == name);
-                    console.log(item.name, "item.name");
-                    console.log(name, "name");
+                    const parts = str.split('-');
+
+                    const name = parts[0];
+                    const io = Number(parts[1].trim());
+
 
                     if (item.name == name) {
-                        console.log(i == io);
-                        console.log(io, "io");
-                        console.log(i, "i");
 
-                        if (i == io) { 
+                        if (i == io) {
                             return await QuotationImage.addQuotationImages({
                                 quote_item_id: newQuotationItem.data.id,
                                 image_url: storageType === 's3' ? file.location : `/uploads/${file.filename}`
                             });
                         }
                     }
-                });  
-                materialData.map(async (item) => { 
+                });
+                materialData.map(async (item) => {
                     if (item.qty != 0) {
                         let quotationMaterialData = {
                             material_id: item.material_id,
@@ -782,10 +768,10 @@ const updateEstimate = async ({ body, user_customer_id, files, storageType }) =>
                                 message: newQuotationMaterial.message,
                                 data: {}
                             });
-                        } 
+                        }
                     } else {
                         await QuotationMaterial.destroy({ where: { id: item.id } })
-                    } 
+                    }
                 })
             } else {
                 await QuotationMaterial.destroy({ where: { quote_item_id: item.id } })
@@ -808,59 +794,62 @@ const updateEstimate = async ({ body, user_customer_id, files, storageType }) =>
             error: error.message
         });
     }
-};
+}; 
+
+const pdf = require('html-pdf');
 
 const generatePdf = async ({ user_customer_id, user_id }) => {
     const estimateData = await getEstimate({ user_customer_id })
-    if (!estimateData.status) {
-        return ({
-            status: false,
-            message: estimateData.message,
-            data: {}
-        });
-    }
- 
-    const getUserData = await User.findOne({ where: { id: user_id } })
-    if (!getUserData) {
-        return ({
-            status: false,
-            message: "This user is not exists. Please try another one."
-        });
-    }
-
-    const existCustomer = estimateData.data.customer
-    const existQuotationDetail = estimateData.data.quotation.quotationDetail
-    const existQuotationItems = estimateData.data.quotation.quotationItem ? estimateData.data.quotation.quotationItem : [] 
-    const formattedDate = new Date(existCustomer.created_at).toISOString().slice(0, 10);
-
-    const transformData = (existQuotationItems) => {
-        return existQuotationItems.map(item => ({
-            ...item,
-            material: item.subProduct,
-            subProduct: undefined
-        }));
-    }; 
-    const newData = transformData(existQuotationItems);
-
-    const finalData = {
-        "name": existCustomer.name,
-        "address": existCustomer.address,
-        "sales_rep": existQuotationDetail.sales_rep,
-        "salesContact": getUserData.phone_number,
-        "date": formattedDate,
-        "contact_no": existCustomer.contact_no,
-        "quote_by": existQuotationDetail.quote_by,
-        "merchant_id": estimateData.data.customer.merchant_id,
-        "quote_number": estimateData.data.quotation.quotationDetail.quote_number,
-        "quotationItems": newData, 
-    }
- 
-
-    const { name, address, contact_no, quote_by, salesContact, quote_number, sales_rep, date, quotationItems } = finalData
-
-    try { 
+        if (!estimateData.status) {
+            return ({
+                status: false,
+                message: estimateData.message,
+                data: {}
+            });
+        }
+    
+        const getUserData = await User.findOne({ where: { id: user_id } })
+        if (!getUserData) {
+            return ({
+                status: false,
+                message: "This user is not exists. Please try another one."
+            });
+        }
+    
+        const existCustomer = estimateData.data.customer
+        const existQuotationDetail = estimateData.data.quotation.quotationDetail
+        const existQuotationItems = estimateData.data.quotation.quotationItem ? estimateData.data.quotation.quotationItem : []
+        const formattedDate = new Date(existCustomer.created_at).toISOString().slice(0, 10);
+    
+        const transformData = (existQuotationItems) => {
+            return existQuotationItems.map(item => ({
+                ...item,
+                material: item.subProduct,
+                subProduct: undefined
+            }));
+        };
+        const newData = transformData(existQuotationItems);
+    
+        const finalData = {
+            "name": existCustomer.name,
+            "address": existCustomer.address,
+            "sales_rep": existQuotationDetail.sales_rep,
+            "salesContact": getUserData.phone_number,
+            "date": formattedDate,
+            "contact_no": existCustomer.contact_no,
+            "quote_by": existQuotationDetail.quote_by,
+            "merchant_id": estimateData.data.customer.merchant_id,
+            "quote_number": estimateData.data.quotation.quotationDetail.quote_number,
+            "quotationItems": newData,
+        }
+    
+    
+        const { name, address, contact_no, quote_by, salesContact, quote_number, sales_rep, date, quotationItems } = finalData
+    
+   
+    try {
         let html = fs.readFileSync(path.join(__dirname, 'template.html'), 'utf8');
-
+  
         html = html.replace('{{name}}', name || '')
             .replace('{{address}}', address || '')
             .replace('{{contact_no}}', contact_no || '')
@@ -880,69 +869,23 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
 
                 let materialsHtml = '';
                 let finalTotal = 0;
+                if (Array.isArray(item.material)) {
+                    let validMaterials = item.material.filter(material => material.qty);
+                    let validMaterialsCount = validMaterials.length;
 
-
- 
-        //         if (Array.isArray(item.material)) {
-        //             let validMaterials = item.material.filter(material => material.qty);
-        //             let validMaterialsCount = validMaterials.length;
-
-        //             let imagesHtml = '';
-        //             if (Array.isArray(item.images)) {
-        //                 imagesHtml = item.images.map((image, i) => `
-        //     <img src="http://localhost:5000${image.image_url}" alt="Image ${i + 1}" style="width: 50px; height: 50px; margin-right: 5px;">
-        // `).join('');
-        //             }
-                
-        //             item.material.forEach((material, index) => {
-                        
-        //                 if (material.qty) {
-        //                     let total = material.price * material.qty;
-        //                     finalTotal += total;
-                
-        //                     materialsHtml += `
-        //                         <tr>
-        //                             ${index === 0 ? `<td rowSpan=${validMaterialsCount} class=''>
-        //                                  ${imagesHtml}
-        //                                 <label>${item.item_name || 'N/A'}</label>
-        //                                 </br>
-        //                                 <label>${item.name || ''}</label>
-        //                             </td>` : ''}
-        //                             <td>${material.name || ''}</td>
-        //                             <td>${material.unit_of_measure || ''}</td>
-        //                             <td>${material.qty || ''}</td>
-        //                             <td>${material.price || ''}</td>
-        //                             <td class='align-content-center'>
-        //                                 <div class='d-flex'>${total || ''}</div>
-        //                             </td>
-        //                             ${index === 0 ? `<td rowSpan=${validMaterialsCount} class='align-content-center'>
-        //                                 <div class='d-flex'>
-        //                                     ${item.total}
-        //                                 </div>
-        //                             </td>` : ''}
-        //                         </tr>
-        //                     `;
-        //                 }
-        //             });
-        //         }
-        if (Array.isArray(item.material)) {
-            let validMaterials = item.material.filter(material => material.qty);
-            let validMaterialsCount = validMaterials.length;
-        
-            // Create an image HTML string by looping through item.images
-            let imagesHtml = '';
-            if (Array.isArray(item.images)) {
-                imagesHtml = item.images.map((image, i) => `
-                    <img src="http://localhost:5000${image.image_url}" alt="Image ${i + 1}" style="width: 80px; margin: 5px;">
+                    let imagesHtml = '';
+                    if (Array.isArray(item.images)) {
+                        imagesHtml = item.images.map((image, i) => `
+                    <img src="https://estimate-ease-backend.onrender.com${image.image_url}" alt="Image ${i + 1}" style="width: 80px; margin: 5px;">
                 `).join('');
-            }
-        
-            item.material.forEach((material, index) => {
-                if (material.qty) {
-                    let total = material.price * material.qty;
-                    finalTotal += total;
-        
-                    materialsHtml += `
+                    }
+
+                    item.material.forEach((material, index) => {
+                        if (material.qty) {
+                            let total = material.price * material.qty;
+                            finalTotal += total;
+
+                            materialsHtml += `
                         <tr>
                             ${index === 0 ? `<td rowSpan=${validMaterialsCount} class=''>
                             <div class=""> 
@@ -967,10 +910,10 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
                             </td>` : ''}
                         </tr>
                     `;
+                        }
+                    });
                 }
-            });
-        }
-        
+
                 lastTotal += finalTotal
 
                 itemsHtml += `
@@ -990,83 +933,36 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
                         `;
 
 
-        html = html.replace('{{#quotationItems}}', itemsHtml);
+        html = html.replace('{{#quotationItems}}', itemsHtml); 
+ 
+        try {
+           
+            const options = { format: 'A4'}; 
+            return new Promise((resolve, reject) => {
 
+                pdf.create(html, options).toBuffer((err, buffer) => {
+                  if (err) {
+                    console.error('Error generating PDF:', err);
+                    return reject({
+                      status: false,
+                      message: 'Error generating PDF',
+                    });
+                  }
+             
+                  resolve({
+                    status: true,
+                    message: "PDF generated successfully.",
+                    data: buffer.toString('base64'),  
+                    name: existCustomer.name,  
+                  });
+                });
+              });
+            
 
-        console.log(html);
-        
+          } catch (err) {
+            console.error('Error generating PDF:', err); 
+          }
 
-
-
-        const args = [
-            '--allow-running-insecure-content',
-            '--autoplay-policy=user-gesture-required',
-            '--disable-component-update',
-            '--disable-domain-reliability',
-            '--disable-features=AudioServiceOutOfProcess,IsolateOrigins,site-per-process',
-            '--disable-print-preview',
-            '--disable-setuid-sandbox',
-            '--disable-site-isolation-trials',
-            '--disable-speech-api',
-            '--disable-web-security',
-            '--disk-cache-size=33554432',
-            '--enable-features=SharedArrayBuffer',
-            '--hide-scrollbars',
-            '--ignore-gpu-blocklist',
-            '--in-process-gpu',
-            '--mute-audio',
-            '--no-default-browser-check',
-            '--no-pings',
-            '--no-sandbox',
-            '--no-zygote',
-            '--use-gl=swiftshader',
-            '--window-size=1920,1080',
-        ];
-        try { 
-            const browser = await puppeteer.launch({
-                args,
-                headless: true,
-                defaultViewport: {
-                    deviceScaleFactor: 1,
-                    hasTouch: false,
-                    height: 1080,
-                    isLandscape: true,
-                    isMobile: false,
-                    width: 1920,
-                },
-            });
-
-            const page = await browser.newPage();
-
-            const loaded = page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 0 });
-              
-            await page.setContent(html);
-            await loaded;
-            const pdf = await page.pdf({
-                format: 'A4',
-                printBackground: true,  
-            });
-
-            await browser.close(); 
-            const pdfData = Buffer.from(pdf, "binary")
-
-            return ({
-                status: true,
-                message: "Pdf generated successfully.",
-                data: pdfData,
-                name: existCustomer.name
-            });
-
-        } catch (error) {
-            console.error("Error generating PDF:", error);
-            res.status(500).send("Internal Server Error");
-        }
-
-        return ({
-            status: true,
-            message: "Pdf generated successfully.",
-            data: pdfBuffer
-        });
     } catch (error) {
         console.error(error);
         return ({
@@ -1076,7 +972,7 @@ const generatePdf = async ({ user_customer_id, user_id }) => {
         });
     }
 };
- 
+
 module.exports = {
     createEstimate,
     getEstimate,

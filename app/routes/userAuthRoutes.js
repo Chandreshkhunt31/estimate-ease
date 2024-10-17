@@ -5,7 +5,7 @@ const { userSignupValidationRules, loginValidationRules, validate } = require('.
 const { authenticateUserJWT } = require('../middlewares/authenticateUserJWT')
 const { merchantSubProductValidation } = require('../validators/merchantSubProductValidator'); 
 
-const userAuthController = require('../controllers/userAuthController');
+const userAuthController = require('../controllers/UserAuthController');
 router.post('/signup', userSignupValidationRules(), validate, userAuthController.signup);
 router.post('/login', loginValidationRules(), validate, userAuthController.login);
 
@@ -14,7 +14,7 @@ const userController = require('../controllers/userController')
 router.get("/user/get", authenticateUserJWT, userController.getUser);
 
 
-const merchantProductController = require('../controllers/merchantProductController')
+const merchantProductController = require('../controllers/MerchantProductController')
 
 router.get("/merchant-product/list", authenticateUserJWT, merchantProductController.getMerchantProductList);
 
@@ -23,7 +23,7 @@ const merchantSubProductController = require('../controllers/MerchantSubProductC
 router.get("/merchant-sub-product/list", authenticateUserJWT, merchantSubProductController.getMerchantSubProductList);
 router.post('/merchant-sub-product/add', merchantSubProductValidation(), validate, authenticateUserJWT, merchantSubProductController.addMerchantSubProduct);
 
-const unitController = require('../controllers/unitController')
+const unitController = require('../controllers/UnitController')
 
 router.get("/unit/list", authenticateUserJWT, unitController.getUnitList);
 
