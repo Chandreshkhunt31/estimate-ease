@@ -42,7 +42,8 @@ const addUnit = async (req, res) => {
 const updateUnit = async (req, res) => {
     try {
         const { unit_id } = req.query;
-        const body = req.body;
+        const { name, code } = req.body;
+        const body = { name, code }
 
         const existingUnit = await Unit.findByPk(unit_id);
         if (!existingUnit) {

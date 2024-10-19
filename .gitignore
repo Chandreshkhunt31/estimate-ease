@@ -5,3 +5,6 @@
 
 # Sequelize config
 config/config.json
+
+/uploads
+/public

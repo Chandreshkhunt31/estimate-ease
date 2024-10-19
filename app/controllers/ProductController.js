@@ -47,7 +47,9 @@ const addProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
         const { product_id } = req.query;
-        const updateData = req.body;
+        const { name, business_category_id } = req.body;
+
+        const updateData = { name, business_category_id };
 
         if (!product_id) {
             return res.status(400).json({
@@ -106,7 +108,7 @@ const getProductList = async (req, res) => {
         if(is_exist == "true"){ 
             const merchantProductList = await MerchantProduct.findAll({ where: { merchant_id } }); 
             const data = merchantProductList.map((item) => item.product_id) 
-            console.log(data);
+             
 
             const ExistMerchantQueryCondition = { where: { business_category_id, id: { [Op.notIn]: data } } } 
 

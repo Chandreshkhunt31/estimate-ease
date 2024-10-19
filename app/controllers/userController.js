@@ -124,8 +124,9 @@ const getUserList = async (req, res) => {
 
 const getUser = async (req, res) => {
     try {
-        const { user_id } = req.query;
-
+        let { user_id } = req.query;
+ 
+        if (user_id == null) user_id = req.id   
         if (!user_id) {
             return res.status(400).json({
                 status: false,

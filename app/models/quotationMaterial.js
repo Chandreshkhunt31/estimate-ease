@@ -15,6 +15,14 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
+    material_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'merchant_sub_products',
+        key: 'id'
+      }
+    },
     unit_of_measure: {
       type: DataTypes.STRING,
       allowNull: false
@@ -39,6 +47,10 @@ module.exports = (sequelize, DataTypes) => {
     Material.belongsTo(models.QuotationItem, {
       foreignKey: 'quote_item_id',
       as: 'quotation_items'
+    });
+    Material.belongsTo(models.MerchantSubProduct, {
+      foreignKey: 'material_id',
+      as: 'merchant_sub_products'
     });
   };
 

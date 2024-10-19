@@ -3,6 +3,8 @@ const Merchant = require('../models').Merchant;
 const Product = require('../models').Product;
 const MerchantSubProduct = require('../models').MerchantSubProduct;
 const SubProductUnit = require('../models').SubProductUnit;
+const QuotationMaterial = require('../models').QuotationMaterial;
+
 
 // insert Merchant Product
 const addMerchantProduct = async (req, res) => {
@@ -45,9 +47,9 @@ const addMerchantProduct = async (req, res) => {
 const updateMerchantProduct = async (req, res) => {
     try {
         const { merchant_product_id } = req.query;
-        const updateData = req.body;
-        console.log(updateData);
+        const { merchant_id, product_id } = req.body;
 
+        const updateData = { merchant_id, product_id }; 
 
         if (!merchant_product_id) {
             return res.status(400).json({
@@ -92,9 +94,9 @@ const updateMerchantProduct = async (req, res) => {
 
 const getMerchantProductList = async (req, res) => {
     try {
-        const { merchant_id, is_exist } = req.query;
-
-        const queryCondition = merchant_id ? { where: { merchant_id } } : {};
+        const { merchant_id } = req.query;
+        
+        const queryCondition = { where: { merchant_id } };
 
         const merchantProductList = await MerchantProduct.findAll({
             ...queryCondition,
@@ -104,26 +106,7 @@ const getMerchantProductList = async (req, res) => {
             },
             ]
         });
-
-        if(is_exist == "true"){ 
-           
-            const data = merchantProductList.map((item) => item.product_id)
-
-            console.log(data);
-
-          
-
-    
-            // if (merchantProductList.length === 0) {
-                return res.status(404).json({
-                    status: false,
-                    message: "No merchant products found for the given criteria.",
-                    data: isExistMerchantProductList
-                });
-            // }
-        }
-
-
+  
         if (merchantProductList.length === 0) {
             return res.status(404).json({
                 status: false,
@@ -131,7 +114,7 @@ const getMerchantProductList = async (req, res) => {
                 data: []
             });
         }
-
+ 
         return res.status(200).json({
             status: true,
             message: "Merchant product list retrieved successfully.",
@@ -195,9 +178,18 @@ const deleteMerchantProduct = async (req, res) => {
                 message: "Merchant Product ID is required."
             });
         }
-
-        const MerchantSubProductData = await MerchantSubProduct.findAll({ where: { merchant_product_id: merchant_product_id } });
-
+ 
+        const MerchantSubProductData = await MerchantSubProduct.findAll({ where: { merchant_product_id: merchant_product_id } }); 
+        const isExistSubProduct = MerchantSubProductData.map(async (item) => await QuotationMaterial.findAll({ where: { material_id: item.id } }))
+  
+        if (isExistSubProduct.length != 0) { 
+            return res.status(400).json({
+                status: false,
+                message: "This product is currently in use and cannot be deleted.",
+                data: {}
+            });
+    
+        } 
         await Promise.all(MerchantSubProductData.map(item => SubProductUnit.destroy({ where: { sub_product_id: item.id } })));
 
         await MerchantSubProduct.destroy({ where: { merchant_product_id: merchant_product_id } });

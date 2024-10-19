@@ -1,3 +1,4 @@
+const QuotationMaterial = require('../models').QuotationMaterial;
 const MerchantSubProduct = require('../models').MerchantSubProduct;
 const SubProductUnit = require('../models').SubProductUnit;
 const Unit = require('../models').Unit;
@@ -24,18 +25,39 @@ const addMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
-        const sub_product_id = newSubProduct.id
+        let merchantSubProductsUnit = [];
+        const sub_product_id = newSubProduct.id;
 
-        unit_id.map(async(item)=>{
-            console.log(item);
-            unit_id = item
-            await SubProductUnit.create({ unit_id, sub_product_id });
-        })
-
+        if (unit_id && unit_id.length > 0) {
+            for (const item of unit_id) { 
+                let unitData = await SubProductUnit.create({ unit_id: item, sub_product_id });
+                if (unitData) {
+                    const queryCondition = { where: { id: unitData.id } }
+                    const subProductUnitData = await SubProductUnit.findOne({
+                        ...queryCondition, include: [{
+                            model: Unit,
+                            as: 'units',
+                        },
+                        ]
+                    });
+                  
+                    const data = {
+                        "id": unitData.id,
+                        "unit_id": unitData.unit_id,
+                        "sub_product_id": unitData.sub_product_id,
+                        "units": subProductUnitData.units
+                    }
+                    merchantSubProductsUnit.push(data);
+                }
+            }
+        } 
+        newSubProduct.SubProductUnits = merchantSubProductsUnit
+      
         return res.status(201).json({
             status: true,
             message: "Merchant Sub Product added successfully.",
-            data: newSubProduct
+            data: newSubProduct,
+            SubProductUnits: merchantSubProductsUnit
         });
     } catch (error) {
         console.error(error);
@@ -50,7 +72,9 @@ const addMerchantSubProduct = async (req, res) => {
 const updateMerchantSubProduct = async (req, res) => {
     try {
         const { merchant_sub_product_id } = req.query;
-        const updates = req.body;
+        let { name, price } = req.body;
+
+        const updates = {  name, price };
 
         if (!merchant_sub_product_id) {
             return res.status(400).json({
@@ -78,8 +102,7 @@ const updateMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
-        const sub_product_id = merchant_sub_product_id
-        console.log(sub_product_id, "sub_product_id");
+        const sub_product_id = merchant_sub_product_id 
         
         const queryCondition = sub_product_id ? { where: { sub_product_id } } : {};
         const units = await SubProductUnit.findAll({
@@ -225,6 +248,16 @@ const deleteMerchantSubProduct = async (req, res) => {
                 data: {}
             });
         }
+
+        const isExistSubProduct = await QuotationMaterial.findAll({ where: { material_id: merchant_sub_product_id } })
+      
+        if (isExistSubProduct.length != 0) { 
+            return res.status(400).json({
+                status: false,
+                message: "This product is currently in use and cannot be deleted.",
+                data: {}
+            }); 
+        } 
 
         await SubProductUnit.destroy({ where: { sub_product_id: merchant_sub_product_id } });
 
